@@ -15,13 +15,16 @@ namespace UnityTools_4_6
         /// </summary>
         /// <param name="threadedOperation"></param>
         /// <returns></returns>
-        public static TinyCoro SpawnNext(Func<IEnumerator> operation)
+        public static TinyCoro SpawnNext(Func<IEnumerator> operation, string name = null)
         {
             var coro = new TinyCoro(operation);
+            coro.Name = name;
             var index = _allCoros.Count;
             if (Current != null)
                 index = _allCoros.IndexOf(Current) + 1;
             _allCoros.Insert(index, coro);
+
+            Debug.Log(coro + " created at index " + index);
             return coro;
         }
 

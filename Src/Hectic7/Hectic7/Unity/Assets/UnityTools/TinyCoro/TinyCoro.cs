@@ -7,6 +7,7 @@ namespace UnityTools_4_6
 {
     public partial class TinyCoro
     {
+        public string Name { get; set; }
         public bool Alive { get; private set; }
         public event Action<TinyCoro, TinyCoroFinishReason> OnFinished;
 
@@ -14,6 +15,7 @@ namespace UnityTools_4_6
         {
             if (!Alive)
                 return;
+            Debug.Log(this + " are kill " + TinyCoroFinishReason.Killed);
             if (OnFinished != null)
                 OnFinished(this, TinyCoroFinishReason.Killed);
             Alive = false;
@@ -59,9 +61,15 @@ namespace UnityTools_4_6
             {
                 // Executed final block of code
                 Alive = false;
+                Debug.Log(this + " are kill " + TinyCoroFinishReason.Finished);
                 if (OnFinished != null)
                     OnFinished(this, TinyCoroFinishReason.Finished);
             }
+        }
+
+        public override string ToString()
+        {
+            return string.Format("[{0}, {1}]", Name, base.ToString());
         }
 
         private Func<IEnumerator> _operation;

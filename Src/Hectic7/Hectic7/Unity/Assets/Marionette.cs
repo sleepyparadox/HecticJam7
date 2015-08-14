@@ -31,7 +31,7 @@ namespace Hectic7
             SpeedAttack = speedAttack;
             Control = control;
             Section = section;
-            Transform.localScale = Vector3.one * (Control == ControlScheme.Ai ? 15f: 5f);
+            Transform.localScale = Vector3.one * 5f;
 
             GameObject.name = GetType().Name + "(" + Control + ")";
 
@@ -43,22 +43,21 @@ namespace Hectic7
             WorldPosition = Main.GetStartingPos(Section);
         }
 
-        public IEnumerator DoTurn(Marionette target)
+        public IEnumerator DoTurn(Marionette defender)
         {
             //TODO choose pattern
-            Debug.Log(this + " start turn vs " + target);
+            Debug.Log(this + " start turn vs " + defender);
 
-            var pattern = TinyCoro.SpawnNext(() => BulletPattern.TripleSpray(this, target, Section.getOther()));
-            var attackMove = TinyCoro.SpawnNext(() => this.DoMove(Role.Attacking));
-            var defendMove = TinyCoro.SpawnNext(() => target.DoMove(Role.Defending));
+            var pattern = TinyCoro.SpawnNext(() => BulletPattern.TripleSpray(this, defender, Section.getOther()), "pattern");
+            var attackMove = TinyCoro.SpawnNext(() => this.DoMove(Role.Attacking), "pattern");
+            var defendMove = TinyCoro.SpawnNext(() => defender.DoMove(Role.Defending), "pattern");
 
-            while(pattern.Alive)
+            while(pattern.Alive && defender.Alive)
             {
-                if (!target.Alive)
-                    yield break;
                 yield return null;
             }
 
+            pattern.Kill();
             defendMove.Kill();
             attackMove.Kill();
         }

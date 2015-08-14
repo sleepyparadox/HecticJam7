@@ -16,7 +16,7 @@ namespace Hectic7
 
     public class BulletPattern
     {
-        public static IEnumerator TripleSpray(Marionette parent, Marionette target, Direction dir)
+        public static IEnumerator TripleSpray(Marionette attacker, Marionette defender, Direction dir)
         {
             var phaseDuration = 3f;
             var bulletSpeed = 15f;
@@ -27,10 +27,12 @@ namespace Hectic7
             for (int phaseIndex = 0; phaseIndex < phaseTotal; phaseIndex++)
             {
                 yield return TinyCoro.Wait(phaseDuration / 2f);
-                Debug.Log(string.Format("{0}, shot", parent.Control));
-
-                var spray = TinyCoro.SpawnNext(() => DoSpray(parent, target, bulletSpeed));
-                TinyCoro.Current.OnFinished += (c, r) => spray.Kill();
+                var spray = TinyCoro.SpawnNext(() => DoSpray(attacker, defender, bulletSpeed), "phase " + phaseIndex);
+                TinyCoro.Current.OnFinished += (c, r) =>
+                {
+                    Debug.Log("Bullet pattern died");
+                    spray.Kill();
+                };
                 phases.Add(spray);
 
                 yield return TinyCoro.Wait(phaseDuration / 2f);
@@ -39,18 +41,18 @@ namespace Hectic7
             yield return TinyCoro.WaitUntil(() => phases.All(p => !p.Alive));
             yield return TinyCoro.WaitUntil(() => !Main.S.ActiveBullets.Any());
         }
-        static IEnumerator DoSpray(Marionette parent, Marionette target, float bulletSpeed)
+        static IEnumerator DoSpray(Marionette attacker, Marionette defender, float bulletSpeed)
         {
             for (var angleOffset = 0f; angleOffset < Mathf.PI * 0.35f; angleOffset += Mathf.PI * 0.05f)
             {
                 //var angleLook = Mathf.Atan2(parent.WorldPosition.y - target.WorldPosition.y, parent.WorldPosition.x - target.WorldPosition.x);
-                var angleLook = -1f * Mathf.Atan2(parent.WorldPosition.x - target.WorldPosition.x, target.WorldPosition.y - parent.WorldPosition.y);
+                var angleLook = -1f * Mathf.Atan2(attacker.WorldPosition.x - defender.WorldPosition.x, defender.WorldPosition.y - attacker.WorldPosition.y);
                 for (var side = -1f; side <= 1; side += 2)
                 {
-                    var angle = angleLook + (angleOffset);
+                    var angle = angleLook + (angleOffset * side);
 
-                    var bullet = new Bullet(parent, 5f);
-                    bullet.WorldPosition = parent.WorldPosition;
+                    var bullet = new Bullet(attacker, 5f);
+                    bullet.WorldPosition = attacker.WorldPosition;
                     bullet.Velocity = new Vector3(Mathf.Sin(angle), Mathf.Cos(angle), 0f) * bulletSpeed;
                 }
 

@@ -102,7 +102,7 @@ namespace Hectic7
                 Main.S.ActiveBullets[j].UnityFixedUpdate = null;
             }
 
-            yield return  TinyCoro.Wait(3);
+            yield return  TinyCoro.Wait(30);
 
             Application.LoadLevel(0);
         }
