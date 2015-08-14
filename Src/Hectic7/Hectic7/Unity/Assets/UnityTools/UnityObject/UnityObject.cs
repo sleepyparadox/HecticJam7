@@ -77,7 +77,7 @@ public class UnityObject
         return GameObject.Find(name);
     }
 
-    public bool Alive
+    public bool Exists
     {
         get
         {

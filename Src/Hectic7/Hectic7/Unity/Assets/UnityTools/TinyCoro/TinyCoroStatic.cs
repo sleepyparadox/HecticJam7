@@ -8,6 +8,8 @@ namespace UnityTools_4_6
 {
     public partial class TinyCoro
     {
+        public static TinyCoro Current { get; private set; }
+
         /// <summary>
         /// Adds an new TinyCoro to the pool after the currently exceutiny one (or last if none are running) 
         /// </summary>
@@ -17,8 +19,8 @@ namespace UnityTools_4_6
         {
             var coro = new TinyCoro(operation);
             var index = _allCoros.Count;
-            if (_currentCoro != null)
-                index = _allCoros.IndexOf(_currentCoro) + 1;
+            if (Current != null)
+                index = _allCoros.IndexOf(Current) + 1;
             _allCoros.Insert(index, coro);
             return coro;
         }
@@ -28,10 +30,10 @@ namespace UnityTools_4_6
             for (int i = 0; i < _allCoros.Count; )
             {
                 //Step normal
-                _currentCoro = _allCoros[i];
-                if (_currentCoro.Alive)
-                    _currentCoro.Step();
-                if (!_currentCoro.Alive)
+                Current = _allCoros[i];
+                if (Current.Alive)
+                    Current.Step();
+                if (!Current.Alive)
                 {
                     _allCoros.RemoveAt(i);
                 }
@@ -40,7 +42,7 @@ namespace UnityTools_4_6
                     ++i;
                 }
             }
-            _currentCoro = null;
+            Current = null;
         }
 
 
@@ -70,6 +72,5 @@ namespace UnityTools_4_6
         public static IEnumerable<TinyCoro> AllCoroutines { get { return _allCoros; } }
 
         private static List<TinyCoro> _allCoros = new List<TinyCoro>();
-        private static TinyCoro _currentCoro;
     }
 }
