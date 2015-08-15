@@ -25,17 +25,20 @@ namespace Hectic7
     {
         public IEnumerator DoPreform(Marionette attacker, Marionette defender, Direction direction)
         {
-            
+            var numberOfBullets = 10;
+            var timePerBullet = BulletPatterns.Duration / numberOfBullets;
 
-            
-
-            var elapsed = 0f;
-            while (elapsed < 100f)
+            for (int i = 0; i < numberOfBullets; i++)
             {
-                yield return null;
-                elapsed += Time.deltaTime;
+                var bullet = new Bullet(attacker, BulletType.Bullet8);
+                bullet.Center = new Vector3((float)i / (numberOfBullets - 1) * Main.MapSize.x, direction == Direction.Down ? Main.Top : Main.Bottom);
+                bullet.Velocity = (direction == Direction.Down ? Vector3.down : Vector3.up) * 10f;   
+
+                yield return TinyCoro.Wait(timePerBullet);
             }
 
+            while (Main.S.ActiveBullets.Any())
+                yield return null;
         }
     }
 

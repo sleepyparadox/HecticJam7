@@ -25,6 +25,7 @@ namespace Hectic7
             set
             {
                 RealPosition = value - (Size * 0.5f);
+                WorldPosition = RealPosition.Snap();
             }
         }
 
@@ -48,13 +49,13 @@ namespace Hectic7
         {
             RealPosition += Velocity * Time.fixedDeltaTime;
 
-            if (RealPosition.x - (Size.x * 0.5f) < Main.Left)
+            if (RealPosition.x  < Main.Left)
                 Velocity.x *= -1f;
-            if (RealPosition.x + (Size.x * 0.5f) > Main.Right)
+            if (RealPosition.x + Size.x  > Main.Right)
                 Velocity.x *= -1f;
 
-            if((RealPosition.y - (Size.y * 0.5f) < Main.Bottom && Velocity.y < 0)
-                || (RealPosition.y + (Size.y * 0.5f) > Main.Top && Velocity.y > 0))
+            if((RealPosition.y < Main.Bottom && Velocity.y < 0)
+                || (RealPosition.y + Size.y > Main.Top && Velocity.y > 0))
             {
                 Dispose();
             }

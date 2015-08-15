@@ -39,6 +39,7 @@ namespace Hectic7
             set
             {
                 RealPosition = value - (Size * 0.5f);
+                RealPosition.z = 1f;
             }
         }
 
@@ -179,6 +180,7 @@ namespace Hectic7
                 }
 
                 RealPosition = Main.ClampToMap(RealPosition, Section, Size);
+                RealPosition.z = 1f;
                 WorldPosition = RealPosition.Snap();
 
                 if (role == Role.Defending)
@@ -187,12 +189,24 @@ namespace Hectic7
                     for (int i = 0; i < Main.S.ActiveBullets.Count; i++)
                     {
                         var bullet = Main.S.ActiveBullets[i];
-                        var coolideAt = (bullet.Transform.localScale.y + HitRadius) / 2f;
+                        var bulletCenter = bullet.WorldPosition + (bullet.Size / 2f) + new Vector3(0.5f, 0.5f, 0);
+                        var collideRadius = bullet.Size.x / 2f;
 
-                        if ((myPos - bullet.WorldPosition).sqrMagnitude < coolideAt * coolideAt)
+                        collideRadius -= 0.1f;
+
+                        var hitStart = WorldPosition + Size / 2f;
+                        for(var xHit = 0; xHit < 2; ++xHit)
                         {
-                            Alive = false;
-                            yield break;
+                            for (var yHit = 0; yHit < 2; ++yHit)
+                            {
+                                var hitPos = hitStart + new Vector3(xHit, yHit, 0);
+
+                                if((bulletCenter - hitPos).sqrMagnitude < (collideRadius * collideRadius))
+                                {
+                                    Alive = false;
+                                    yield break;
+                                }
+                            }
                         }
                     }
                 }
