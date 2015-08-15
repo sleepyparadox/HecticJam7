@@ -15,7 +15,7 @@ namespace Hectic7
     }
     public class Marionette : UnityObject
     {
-        public Direction Section { get; private set; }
+        public DirVertical Section { get; private set; }
         public bool Alive { get; private set; }
         public float SpeedDefence { get; private set; }
         public float SpeedAttack { get; private set; }
@@ -43,7 +43,7 @@ namespace Hectic7
             }
         }
 
-        public Marionette(ControlScheme control, Direction section, PrefabAsset sprite,  float speedDefence, float speedAttack)
+        public Marionette(ControlScheme control, DirVertical section, PrefabAsset sprite,  float speedDefence, float speedAttack)
             : base(sprite)
         {
             Alive = true;
@@ -140,12 +140,11 @@ namespace Hectic7
 
         IBulletPattern[] AiChoosePattern(Marionette defender)
         {
-            return new IBulletPattern[]
-            {
-                BulletPatterns.LToR,
-                BulletPatterns.LToR,
-                BulletPatterns.LToR,
-            };
+            var patternChoices = BulletPatterns.DefaultSets.Values.ToList();
+
+            var func = patternChoices[UnityEngine.Random.Range(0, patternChoices.Count)];
+
+            return func();
         }
 
         void BuildAndShowTurnMenu(Marionette defender, Action<IBulletPattern[]> onPatternChoice, Action onSkip)
@@ -177,23 +176,19 @@ namespace Hectic7
             mainDialog[0].Set("Spells", () =>
             {
                 spellDialog = new DialogPopup(Assets.Dialogs.BigDialogPrefab);
-                for (int i = 0; i < spellDialog._items.Count; i++)
+                var i = 0;
+                foreach(var pair in BulletPatterns.DefaultSets)
                 {
-                    spellDialog[i].Set("Pattern " + i, () =>
+                    var choiceFunc = pair.Value;
+                    spellDialog[i].Set(pair.Key, () =>
                     {
                         Debug.Log("Pattern selected");
                         mainDialog.Dispose();
                         spellDialog.Dispose();
 
-                        var choice = new IBulletPattern[]
-                        {
-                            BulletPatterns.LToR,
-                            BulletPatterns.LToR,
-                            BulletPatterns.LToR,
-                        };
-
-                        onPatternChoice(choice);
+                        onPatternChoice(choiceFunc());
                     });
+                    i++;
                 }
             });
 

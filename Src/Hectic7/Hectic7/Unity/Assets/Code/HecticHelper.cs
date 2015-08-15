@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 
-public static class IEnumerableHelper
+public static class HecticHelper
 {
     public static int FirstIndex<T>(this IEnumerable<T> col, Func<T, bool> match = null)
     {
@@ -32,10 +32,22 @@ public static class IEnumerableHelper
 
         return val;
     }
+
+    /// <summary>
+    /// Rounds each axis to nearest int
+    /// </summary>
     public static Vector3 Snap(this Vector3 src)
     {
         //return src;
         return new Vector3(Mathf.Round(src.x), Mathf.Round(src.y), Mathf.Round(src.z));
+    }
+
+    /// <summary>
+    /// Sets z to zero
+    /// </summary>
+    public static Vector3 Flatten(this Vector3 src)
+    {
+        return new Vector3(src.x, src.y, 0);
     }
 }
    

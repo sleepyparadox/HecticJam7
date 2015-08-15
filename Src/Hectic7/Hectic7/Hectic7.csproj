@@ -51,11 +51,11 @@
     <Compile Include="Unity\Assets\Code\Bullet.cs" />
     <Compile Include="Unity\Assets\Code\DialogPopup.cs" />
     <Compile Include="Unity\Assets\Code\Direction.cs" />
-    <Compile Include="Unity\Assets\Code\BulletPattern.cs" />
+    <Compile Include="Unity\Assets\Code\BulletPatterns.cs" />
     <Compile Include="Unity\Assets\Code\Main.cs" />
     <Compile Include="Unity\Assets\Code\Marionette.cs" />
     <Compile Include="Unity\Assets\Code\MenuItem.cs" />
-    <Compile Include="Unity\Assets\Code\IEnumerableHelper.cs" />
+    <Compile Include="Unity\Assets\Code\HecticHelper.cs" />
     <Compile Include="Unity\Assets\Code\Role.cs" />
     <Compile Include="Unity\Assets\Code\Timer.cs" />
     <Compile Include="Unity\Assets\UnityTools\Asset\Asset.cs" />

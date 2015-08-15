@@ -31,6 +31,8 @@ namespace Hectic7
 
         public readonly UnityObject Owner;
         public Vector3 Velocity;
+        private bool _bounces;
+
         public Bullet(UnityObject owner, BulletType bulletType)
             : base(PrefabFromType(bulletType))
         {
@@ -49,13 +51,13 @@ namespace Hectic7
         {
             RealPosition += Velocity * Time.fixedDeltaTime;
 
-            if (RealPosition.x  < Main.Left)
+            if (RealPosition.x  < Main.Left && Velocity.x < 0f)
                 Velocity.x *= -1f;
-            if (RealPosition.x + Size.x  > Main.Right)
+            if (RealPosition.x + Size.x  > Main.Right && Velocity.x > 0f)
                 Velocity.x *= -1f;
 
-            if((RealPosition.y < Main.Bottom && Velocity.y < 0)
-                || (RealPosition.y + Size.y > Main.Top && Velocity.y > 0))
+            if((RealPosition.y + Size.y < Main.Bottom && Velocity.y < 0)
+                || (RealPosition.y > Main.Top && Velocity.y > 0))
             {
                 Dispose();
             }
