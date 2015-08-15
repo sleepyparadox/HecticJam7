@@ -17,10 +17,12 @@ namespace Hectic7
                 if(_infTime)
                 {
                     _timerText.text = "inf";
+                    SetActive(false);
                 }
                 else
                 {
                     Time = Time;
+                    SetActive(true);
                 }
             }
         }
@@ -31,6 +33,7 @@ namespace Hectic7
             set
             {
                 _infTime = false;
+                SetActive(true);
                 _time = value;
                 _timerText.text = Mathf.CeilToInt(_time).ToString();
             }

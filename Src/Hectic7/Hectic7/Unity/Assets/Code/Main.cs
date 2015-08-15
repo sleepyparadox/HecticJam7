@@ -54,8 +54,8 @@ namespace Hectic7
                 "Hello there!", "","","",
                 "Welcome to the land", "of puppets","","",
                 "Puppets are amazing", "puppets that can","puppet anything","",
-                "Here you will learn", "","","",
-                "grow", "","","",
+                "Here you will", "learn...","","",
+                "grow...", "","","",
                 "and puppet", "","","",
                 "Good luck!", "","","",
                 };
