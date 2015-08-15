@@ -13,43 +13,32 @@ namespace Hectic7
         public static Vector3 MapSize = new Vector3(160, 144);
         public static Vector3 ClampToMap(Vector3 src, Direction section)
         {
-            if (section == Direction.Up)
-            {
-                return new Vector3(Mathf.Clamp(src.x, Left, Right), Mathf.Clamp(src.y, Middle, Top), src.z);
-            }
-            else
-            {
-                return new Vector3(Mathf.Clamp(src.x, Left, Right), Mathf.Clamp(src.y, Bottom, Middle), src.z);
-            }
+            return new Vector3(Mathf.Clamp(src.x, Left, Right), Mathf.Clamp(src.y, Bottom, Top), src.z);
+            //if (section == Direction.Up)
+            //{
+            //    return new Vector3(Mathf.Clamp(src.x, Left, Right), Mathf.Clamp(src.y, Middle, Top), src.z);
+            //}
+            //else
+            //{
+            //    return new Vector3(Mathf.Clamp(src.x, Left, Right), Mathf.Clamp(src.y, Bottom, Middle), src.z);
+            //}
         }
         public static Vector3 GetStartingPos(Direction section)
         {
             return new Vector3((section == Direction.Up ? Right : Left) * 0.9f, (section == Direction.Up ? Top : Bottom) * 0.9f);
         }
 
-        public static float Left { get { return MapSize.x * -0.5f; } }
-        public static float Right { get { return MapSize.x * 0.5f; } }
-        public static float Top { get { return MapSize.y * 0.5f; } }
-        public static float Bottom { get { return MapSize.y * -0.5f; } }
-        public static float Middle { get { return 0; } }
+        public static float Left { get { return 0; } }
+        public static float Right { get { return MapSize.x; } }
+        public static float Top { get { return MapSize.y; } }
+        public static float Bottom { get { return 0; } }
 
         public static Main S;
 
         public List<Bullet> ActiveBullets = new List<Bullet>();
-        public float Timer
-        {
-            get { return _time; }
-            set
-            {
-                _time = value;
-                _timerText.text = Mathf.CeilToInt(_time).ToString();
-            }
-        }
-
+        
         public MenuRenderer MenuRenderer { get; private set; }
-
-        float _time;
-        private TextMesh _timerText;
+        public Timer Timer { get; private set; }
 
         void Awake()
         {
@@ -65,21 +54,21 @@ namespace Hectic7
         public IEnumerator DoGame()
         {
             MenuRenderer = new MenuRenderer();
+            Timer = new Timer();
 
-            _timerText = GameObject.Find("TimerText").GetComponent<TextMesh>();
             var parties = new Marionette[][]
             {
                 new Marionette[]
                 {
-                    new Marionette(ControlScheme.Player, Direction.Down, 50f, 40f),
-                    new Marionette(ControlScheme.Player, Direction.Down, 50f, 40f),
-                    new Marionette(ControlScheme.Player, Direction.Down, 50f, 40f),
+                    new Marionette(ControlScheme.Player, Direction.Down, Assets.Mars.Mar00Prefab, 50f, 50f),
+                    new Marionette(ControlScheme.Player, Direction.Down, Assets.Mars.Mar00Prefab, 50f, 50f),
+                    new Marionette(ControlScheme.Player, Direction.Down, Assets.Mars.Mar00Prefab, 50f, 50f),
                 },
                 new Marionette[]
                 {
-                    new Marionette(ControlScheme.Ai, Direction.Up, 50f, 40f),
-                    new Marionette(ControlScheme.Ai, Direction.Up, 50f, 40f),
-                    new Marionette(ControlScheme.Ai, Direction.Up, 50f, 40f),
+                    new Marionette(ControlScheme.Ai, Direction.Up, Assets.Mars.Mar01Prefab, 50f, 40f),
+                    new Marionette(ControlScheme.Ai, Direction.Up, Assets.Mars.Mar01Prefab, 50f, 40f),
+                    new Marionette(ControlScheme.Ai, Direction.Up, Assets.Mars.Mar01Prefab, 50f, 40f),
                 },
             };
 

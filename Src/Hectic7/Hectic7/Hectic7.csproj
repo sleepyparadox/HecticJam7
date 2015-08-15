@@ -56,6 +56,7 @@
     <Compile Include="Unity\Assets\Menu.cs" />
     <Compile Include="Unity\Assets\MenuRenderer.cs" />
     <Compile Include="Unity\Assets\Role.cs" />
+    <Compile Include="Unity\Assets\Timer.cs" />
     <Compile Include="Unity\Assets\UnityTools\Asset\Asset.cs" />
     <Compile Include="Unity\Assets\UnityTools\Asset\AssetDirectory.cs" />
     <Compile Include="Unity\Assets\UnityTools\Asset\AssetGenerator.cs" />

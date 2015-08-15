@@ -21,20 +21,23 @@ namespace Hectic7
         public float SpeedAttack { get; private set; }
         public ControlScheme Control { get; private set; }
 
+        public static Vector3 SpriteSize { get { return new Vector3(16f, 16f, 0f); } }
+        public static Vector3 HitPosLocal { get { return new Vector3(7.5f, 7.5f, 0f); } }
+        public static float HitRadius { get { return 2f; } }
+
         public float MyHp { get; set; }
 
 
         private float _aiSteer = Mathf.PI;
 
-        public Marionette(ControlScheme control, Direction section, float speedDefence, float speedAttack)
-            : base(GameObject.CreatePrimitive(PrimitiveType.Sphere))
+        public Marionette(ControlScheme control, Direction section, PrefabAsset sprite,  float speedDefence, float speedAttack)
+            : base(sprite)
         {
             Alive = true;
             SpeedDefence = speedDefence;
             SpeedAttack = speedAttack;
             Control = control;
             Section = section;
-            Transform.localScale = Vector3.one * 5f;
 
             GameObject.name = GetType().Name + "(" + Control + ")";
 
@@ -51,7 +54,7 @@ namespace Hectic7
             //TODO choose pattern
             Debug.Log(this + " start turn vs " + defender);
 
-            TinyCoro selectedPattern = null;
+            IBulletPattern selectedPattern = null;
             var selectedSkip = false;
 
             if(Control == ControlScheme.Ai)
@@ -75,28 +78,42 @@ namespace Hectic7
 
             if (selectedSkip)
                 yield break;
-
+            
+            var pattern = TinyCoro.SpawnNext(() => selectedPattern.DoPreform(this, defender, Section.GetOther()));
             var timeOut = TinyCoro.SpawnNext(() => DoTimer(15f));
             var attackMove = TinyCoro.SpawnNext(() => this.DoMove(Role.Attacking), "pattern");
             var defendMove = TinyCoro.SpawnNext(() => defender.DoMove(Role.Defending), "pattern");
 
-            while(selectedPattern.Alive && defender.Alive && timeOut.Alive)
+            while(pattern.Alive && defender.Alive && timeOut.Alive)
             {
                 yield return null;
             }
 
+            if(!pattern.Alive)
+            {
+                Debug.Log("Turn end because !pattern.Alive");
+            }
+            if (!defender.Alive)
+            {
+                Debug.Log("Turn end because !defender.Alive");
+            }
+            if (!timeOut.Alive)
+            {
+                Debug.Log("Turn end because !timeOut.Alive");
+            }
+
             timeOut.Kill();
-            selectedPattern.Kill();
+            pattern.Kill();
             defendMove.Kill();
             attackMove.Kill();
         }
 
-        TinyCoro AiChoosePattern(Marionette defender)
+        IBulletPattern AiChoosePattern(Marionette defender)
         {
-            return TinyCoro.SpawnNext(() => BulletPattern.TripleSpray(this, defender, Section.getOther()), "pattern");
+            return BulletPatterns.LToR;
         }
 
-        void BuildAndShowTurnMenu(Marionette defender, Action<TinyCoro> onPatternChoice, Action onSkip)
+        void BuildAndShowTurnMenu(Marionette defender, Action<IBulletPattern> onPatternChoice, Action onSkip)
         {
             var mainMenu = new Menu("Main");
             var statsMenu = new Menu("Stats");
@@ -114,7 +131,7 @@ namespace Hectic7
 
             for (int i = 0; i < 3; i++)
             {
-                patternMenu[i].Set("Pattern " + i, () => onPatternChoice(TinyCoro.SpawnNext(() => BulletPattern.TripleSpray(this, defender, Section.getOther()), "pattern")));
+                patternMenu[i].Set("Pattern " + i, () => onPatternChoice(BulletPatterns.LToR));
             }
             patternMenu[3].Set("Back", () => Main.S.MenuRenderer.Render(mainMenu));
 
@@ -141,16 +158,18 @@ namespace Hectic7
 
                 var speedMod = Input.GetKey(KeyCode.LeftShift) ? 0.5f : 1f;
                 WorldPosition += input * speed * speedMod * Time.deltaTime;
+
                 WorldPosition = Main.ClampToMap(WorldPosition, Section);
 
                 if (role == Role.Defending)
                 {
+                    var myPos = WorldPosition + HitPosLocal;
                     for (int i = 0; i < Main.S.ActiveBullets.Count; i++)
                     {
                         var bullet = Main.S.ActiveBullets[i];
-                        var coolideAt = (bullet.Transform.localScale.y + Transform.localScale.y) / 2f;
+                        var coolideAt = (bullet.Transform.localScale.y + HitRadius) / 2f;
 
-                        if ((WorldPosition - bullet.WorldPosition).sqrMagnitude < coolideAt * coolideAt)
+                        if ((myPos - bullet.WorldPosition).sqrMagnitude < coolideAt * coolideAt)
                         {
                             Alive = false;
                             yield break;
@@ -167,11 +186,11 @@ namespace Hectic7
             var timeRemaining = duration;
             while (timeRemaining > 0f)
             {
-                Main.S.Timer = timeRemaining;
+                Main.S.Timer.Time = timeRemaining;
                 yield return null;
                 timeRemaining -= Time.deltaTime;
             }
-            Main.S.Timer = 0f;
+            Main.S.Timer.Time = 0f;
         }
 
         public override string ToString()

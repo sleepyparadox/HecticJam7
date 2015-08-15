@@ -64,7 +64,7 @@ namespace Hectic7
             }
             else
             {
-                if (Input.GetKeyUp(KeyCode.UpArrow))
+                if (Input.GetKeyUp(KeyCode.UpArrow) || Input.GetKeyUp(KeyCode.W))
                 {
                     _index = (_index - 1).WrapToEnd(Menu.ItemCount);
                     
@@ -75,7 +75,7 @@ namespace Hectic7
                 }
 
                 //Nav up
-                if (Input.GetKeyUp(KeyCode.DownArrow))
+                if (Input.GetKeyUp(KeyCode.DownArrow) || Input.GetKeyUp(KeyCode.S))
                 {
                     Debug.Log("DownArrow");
                     _index = (_index + 1).WrapToEnd(Menu.ItemCount);

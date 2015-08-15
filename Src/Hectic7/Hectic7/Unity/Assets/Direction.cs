@@ -13,7 +13,7 @@ namespace Hectic7
 
     public static class DirectionHelper
     {
-        public static Direction getOther (this Direction dir)
+        public static Direction GetOther (this Direction dir)
         {
             return (Direction)((int)dir * -1);
         }
