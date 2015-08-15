@@ -11,7 +11,7 @@ namespace Hectic7
     public class Main : MonoBehaviour
     {
         public static Vector3 MapSize = new Vector3(160, 144);
-        public static Vector3 ClampToMap (Vector3 src, Direction section)
+        public static Vector3 ClampToMap(Vector3 src, Direction section)
         {
             if (section == Direction.Up)
             {
@@ -24,7 +24,7 @@ namespace Hectic7
         }
         public static Vector3 GetStartingPos(Direction section)
         {
-            return new Vector3((section == Direction.Up ? Middle : Middle) * 0.9f, (section == Direction.Up ? Top : Bottom) * 0.9f);
+            return new Vector3((section == Direction.Up ? Right : Left) * 0.9f, (section == Direction.Up ? Top : Bottom) * 0.9f);
         }
 
         public static float Left { get { return MapSize.x * -0.5f; } }
@@ -36,6 +36,20 @@ namespace Hectic7
         public static Main S;
 
         public List<Bullet> ActiveBullets = new List<Bullet>();
+        public float Timer
+        {
+            get { return _time; }
+            set
+            {
+                _time = value;
+                _timerText.text = Mathf.CeilToInt(_time).ToString();
+            }
+        }
+
+        public MenuRenderer MenuRenderer { get; private set; }
+
+        float _time;
+        private TextMesh _timerText;
 
         void Awake()
         {
@@ -50,37 +64,49 @@ namespace Hectic7
 
         public IEnumerator DoGame()
         {
+            MenuRenderer = new MenuRenderer();
+
+            _timerText = GameObject.Find("TimerText").GetComponent<TextMesh>();
             var parties = new Marionette[][]
             {
                 new Marionette[]
                 {
                     new Marionette(ControlScheme.Player, Direction.Down, 50f, 40f),
+                    new Marionette(ControlScheme.Player, Direction.Down, 50f, 40f),
+                    new Marionette(ControlScheme.Player, Direction.Down, 50f, 40f),
                 },
                 new Marionette[]
                 {
-                    new Marionette(ControlScheme.Ai, Direction.Up, 10f, 10f),
+                    new Marionette(ControlScheme.Ai, Direction.Up, 50f, 40f),
+                    new Marionette(ControlScheme.Ai, Direction.Up, 50f, 40f),
+                    new Marionette(ControlScheme.Ai, Direction.Up, 50f, 40f),
                 },
             };
 
-
-            foreach(var party in parties)
+            foreach (var p in parties)
             {
-                foreach(var m in party)
+                foreach (var m in p)
                 {
                     m.ResetPosition();
+                    m.SetActive(false);
                 }
             }
-            //attacker.ResetPosition();
-            //defender.ResetPosition();
 
             //While both parties can fight
             while (parties.All(p => p.Any(m => m.Alive)))
             {
                 for (int iParty = 0; iParty < parties.Length; iParty++)
                 {
-                    var party = parties[iParty];
-                    var otherParty = parties[iParty == 0 ? 1: 0];
+                    foreach (var p in parties)
+                    {
+                        foreach (var m in p)
+                        {
+                            m.SetActive(false);
+                        }
+                    }
 
+                    var party = parties[iParty];
+                    var otherParty = parties[iParty == 0 ? 1 : 0];
 
                     var attacker = party.FirstOrDefault(m => m.Alive);
                     var defender = otherParty.FirstOrDefault(m => m.Alive);
@@ -88,10 +114,15 @@ namespace Hectic7
                     if (attacker == null || defender == null)
                         break;
 
-
+                    attacker.SetActive(true);
+                    defender.SetActive(true);
 
                     var attackerTurn = TinyCoro.SpawnNext(() => attacker.DoTurn(defender));
                     yield return TinyCoro.Join(attackerTurn);
+
+                    var bullets = new List<Bullet>(Main.S.ActiveBullets);
+                    foreach (var b in bullets)
+                        b.Dispose();
                 }
             }
 
@@ -102,10 +133,9 @@ namespace Hectic7
                 Main.S.ActiveBullets[j].UnityFixedUpdate = null;
             }
 
-            yield return  TinyCoro.Wait(30);
+            yield return TinyCoro.Wait(1);
 
             Application.LoadLevel(0);
         }
-
     }
 }

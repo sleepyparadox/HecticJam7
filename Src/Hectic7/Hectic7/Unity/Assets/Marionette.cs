@@ -21,6 +21,9 @@ namespace Hectic7
         public float SpeedAttack { get; private set; }
         public ControlScheme Control { get; private set; }
 
+        public float MyHp { get; set; }
+
+
         private float _aiSteer = Mathf.PI;
 
         public Marionette(ControlScheme control, Direction section, float speedDefence, float speedAttack)
@@ -48,18 +51,74 @@ namespace Hectic7
             //TODO choose pattern
             Debug.Log(this + " start turn vs " + defender);
 
-            var pattern = TinyCoro.SpawnNext(() => BulletPattern.TripleSpray(this, defender, Section.getOther()), "pattern");
+            TinyCoro selectedPattern = null;
+            var selectedSkip = false;
+
+            if(Control == ControlScheme.Ai)
+            {
+                selectedPattern = AiChoosePattern(defender);
+            }
+            else
+            {
+                BuildAndShowTurnMenu(defender, (choice) => selectedPattern = choice, () => selectedSkip = true);
+            }
+
+            //Wait for choice
+            yield return TinyCoro.WaitUntil(() => selectedPattern != null || selectedSkip);
+
+            Main.S.MenuRenderer.Clear();
+
+            yield return TinyCoro.Wait(0.1f);
+
+            Main.S.MenuRenderer.Clear();
+
+
+            if (selectedSkip)
+                yield break;
+
+            var timeOut = TinyCoro.SpawnNext(() => DoTimer(15f));
             var attackMove = TinyCoro.SpawnNext(() => this.DoMove(Role.Attacking), "pattern");
             var defendMove = TinyCoro.SpawnNext(() => defender.DoMove(Role.Defending), "pattern");
 
-            while(pattern.Alive && defender.Alive)
+            while(selectedPattern.Alive && defender.Alive && timeOut.Alive)
             {
                 yield return null;
             }
 
-            pattern.Kill();
+            timeOut.Kill();
+            selectedPattern.Kill();
             defendMove.Kill();
             attackMove.Kill();
+        }
+
+        TinyCoro AiChoosePattern(Marionette defender)
+        {
+            return TinyCoro.SpawnNext(() => BulletPattern.TripleSpray(this, defender, Section.getOther()), "pattern");
+        }
+
+        void BuildAndShowTurnMenu(Marionette defender, Action<TinyCoro> onPatternChoice, Action onSkip)
+        {
+            var mainMenu = new Menu("Main");
+            var statsMenu = new Menu("Stats");
+            var patternMenu = new Menu("Attack");
+
+            mainMenu[0].Set("Attack", () => Main.S.MenuRenderer.Render(patternMenu));
+            mainMenu[1].Set("Stats", () => Main.S.MenuRenderer.Render(statsMenu));
+            //
+            mainMenu[3].Set("Skip", () => onSkip());
+
+            statsMenu[0].Set("AtkSd " + SpeedAttack, null);
+            statsMenu[1].Set("DefSd " + SpeedDefence, null);
+            //
+            statsMenu[3].Set("Back", () => Main.S.MenuRenderer.Render(mainMenu));
+
+            for (int i = 0; i < 3; i++)
+            {
+                patternMenu[i].Set("Pattern " + i, () => onPatternChoice(TinyCoro.SpawnNext(() => BulletPattern.TripleSpray(this, defender, Section.getOther()), "pattern")));
+            }
+            patternMenu[3].Set("Back", () => Main.S.MenuRenderer.Render(mainMenu));
+
+            Main.S.MenuRenderer.Render(mainMenu);
         }
 
         public IEnumerator DoMove(Role role)
@@ -102,6 +161,19 @@ namespace Hectic7
                 yield return null;
             }
         }
+
+        IEnumerator DoTimer(float duration)
+        {
+            var timeRemaining = duration;
+            while (timeRemaining > 0f)
+            {
+                Main.S.Timer = timeRemaining;
+                yield return null;
+                timeRemaining -= Time.deltaTime;
+            }
+            Main.S.Timer = 0f;
+        }
+
         public override string ToString()
         {
             return string.Format("[{0} {1}, sa: {2}, sd {3}, {4} ]", Control, Section, SpeedAttack, SpeedDefence, base.ToString());

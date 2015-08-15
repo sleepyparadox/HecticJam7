@@ -47,11 +47,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Unity\Assets\Assets.cs" />
     <Compile Include="Unity\Assets\Bullet.cs" />
     <Compile Include="Unity\Assets\Direction.cs" />
     <Compile Include="Unity\Assets\BulletPattern.cs" />
     <Compile Include="Unity\Assets\Main.cs" />
     <Compile Include="Unity\Assets\Marionette.cs" />
+    <Compile Include="Unity\Assets\Menu.cs" />
+    <Compile Include="Unity\Assets\MenuRenderer.cs" />
     <Compile Include="Unity\Assets\Role.cs" />
     <Compile Include="Unity\Assets\UnityTools\Asset\Asset.cs" />
     <Compile Include="Unity\Assets\UnityTools\Asset\AssetDirectory.cs" />

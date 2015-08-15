@@ -10,6 +10,7 @@ namespace Hectic7
         Down = -1,
         Up = 1,
     }
+
     public static class DirectionHelper
     {
         public static Direction getOther (this Direction dir)
