@@ -13,20 +13,12 @@ namespace Hectic7
         public static Vector3 MapSize = new Vector3(160, 144);
         public static Vector3 ClampToMap(Vector3 src, Direction section, Vector3 size)
         {
-            //return src;
             return new Vector3(Mathf.Clamp(src.x, Left , Right - size.x ), Mathf.Clamp(src.y, Bottom , Top - size.x), src.z);
-            //if (section == Direction.Up) + (size.y 
-            //{
-            //    return new Vector3(Mathf.Clamp(src.x, Left, Right), Mathf.Clamp(src.y, Middle, Top), src.z);
-            //}
-            //else
-            //{
-            //    return new Vector3(Mathf.Clamp(src.x, Left, Right), Mathf.Clamp(src.y, Bottom, Middle), src.z);
-            //}
+            
         }
         public static Vector3 GetStartingPos(Direction section)
         {
-            return new Vector3((section == Direction.Up ? Right : Left) * 0.9f, (section == Direction.Up ? Top : Bottom) * 0.9f);
+            return new Vector3((section == Direction.Up ? 0.9f : 0.1f) * MapSize.x, (section == Direction.Up ? 0.9f : 0.1f) * MapSize.y);
         }
 
         public static float Left { get { return 0; } }
@@ -38,7 +30,6 @@ namespace Hectic7
 
         public List<Bullet> ActiveBullets = new List<Bullet>();
         
-        public MenuRenderer MenuRenderer { get; private set; }
         public Timer Timer { get; private set; }
 
         void Awake()
@@ -54,7 +45,6 @@ namespace Hectic7
 
         public IEnumerator DoGame()
         {
-            MenuRenderer = new MenuRenderer();
             Timer = new Timer();
 
             var playerSpeed = 75f;
@@ -76,6 +66,8 @@ namespace Hectic7
                 },
             };
 
+            yield return null;
+
             foreach (var p in parties)
             {
                 foreach (var m in p)
@@ -84,6 +76,8 @@ namespace Hectic7
                     m.SetActive(false);
                 }
             }
+
+            yield return null;
 
             //While both parties can fight
             while (parties.All(p => p.Any(m => m.Alive)))

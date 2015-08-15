@@ -62,6 +62,8 @@ namespace Hectic7
         {
             Center = Main.GetStartingPos(Section);
             WorldPosition = RealPosition.Snap();
+
+            Debug.Log("Set " + this + " to " + WorldPosition);
         }
 
         public IEnumerator DoTurn(Marionette defender)
@@ -69,7 +71,7 @@ namespace Hectic7
             //TODO choose pattern
             Debug.Log(this + " start turn vs " + defender);
 
-            IBulletPattern selectedPattern = null;
+            IBulletPattern[] selectedPattern = null;
             var selectedSkip = false;
 
             if(Control == ControlScheme.Ai)
@@ -84,18 +86,11 @@ namespace Hectic7
             //Wait for choice
             yield return TinyCoro.WaitUntil(() => selectedPattern != null || selectedSkip);
 
-            Main.S.MenuRenderer.Clear();
-
-            yield return TinyCoro.Wait(0.1f);
-
-            Main.S.MenuRenderer.Clear();
-
-
             if (selectedSkip)
                 yield break;
-            
-            var pattern = TinyCoro.SpawnNext(() => selectedPattern.DoPreform(this, defender, Section.GetOther()));
-            var timeOut = TinyCoro.SpawnNext(() => DoTimer(15f));
+
+            var pattern = TinyCoro.SpawnNext(() => DoPatternSequence(defender, selectedPattern));
+            var timeOut = TinyCoro.SpawnNext(() => DoTimer(BulletPatterns.Duration * selectedPattern.Length));
             var attackMove = TinyCoro.SpawnNext(() => this.DoMove(Role.Attacking), "pattern");
             var defendMove = TinyCoro.SpawnNext(() => defender.DoMove(Role.Defending), "pattern");
 
@@ -123,34 +118,90 @@ namespace Hectic7
             attackMove.Kill();
         }
 
-        IBulletPattern AiChoosePattern(Marionette defender)
+        IEnumerator DoPatternSequence(Marionette defender, IBulletPattern[] selectedPattern)
         {
-            return BulletPatterns.LToR;
+            var patterns = new List<TinyCoro>();
+            TinyCoro.Current.OnFinished += (c, r) =>
+            {
+                foreach (var p in patterns)
+                    p.Kill();
+            };
+            
+            for (var i = 0; i < selectedPattern.Length; ++i)
+            {
+                var pattern = selectedPattern[i];
+                patterns.Add(TinyCoro.SpawnNext(() => pattern.DoPreform(this, defender, Section.GetOther())));
+
+                yield return TinyCoro.Wait(BulletPatterns.Duration);
+            }
+
+            yield return TinyCoro.WaitUntil(() => patterns.All(p => !p.Alive));
         }
 
-        void BuildAndShowTurnMenu(Marionette defender, Action<IBulletPattern> onPatternChoice, Action onSkip)
+        IBulletPattern[] AiChoosePattern(Marionette defender)
         {
-            var mainMenu = new Menu("Main");
-            var statsMenu = new Menu("Stats");
-            var patternMenu = new Menu("Attack");
-
-            mainMenu[0].Set("Attack", () => Main.S.MenuRenderer.Render(patternMenu));
-            mainMenu[1].Set("Stats", () => Main.S.MenuRenderer.Render(statsMenu));
-            //
-            mainMenu[3].Set("Skip", () => onSkip());
-
-            statsMenu[0].Set("AtkSd " + SpeedAttack, null);
-            statsMenu[1].Set("DefSd " + SpeedDefence, null);
-            //
-            statsMenu[3].Set("Back", () => Main.S.MenuRenderer.Render(mainMenu));
-
-            for (int i = 0; i < 3; i++)
+            return new IBulletPattern[]
             {
-                patternMenu[i].Set("Pattern " + i, () => onPatternChoice(BulletPatterns.LToR));
-            }
-            patternMenu[3].Set("Back", () => Main.S.MenuRenderer.Render(mainMenu));
+                BulletPatterns.LToR,
+                BulletPatterns.LToR,
+                BulletPatterns.LToR,
+            };
+        }
 
-            Main.S.MenuRenderer.Render(mainMenu);
+        void BuildAndShowTurnMenu(Marionette defender, Action<IBulletPattern[]> onPatternChoice, Action onSkip)
+        {
+            var mainDialog = new DialogPopup(Assets.Dialogs.TinyDialogPrefab, false);
+
+            if(WorldPosition.x + (Size.x / 2f) < Main.Left + (Main.MapSize.x / 2f))
+            {
+                //Sprite on left, show dialog on right
+                mainDialog.WorldPosition = WorldPosition + new Vector3(+24, -8, mainDialog.WorldPosition.z);
+            }
+            else
+            {
+                //Sprite on right, show dialog on left
+                mainDialog.WorldPosition = WorldPosition + new Vector3(-5 * 8, -8, mainDialog.WorldPosition.z);
+            }
+
+            if(mainDialog.WorldPosition.y < Main.Bottom)
+            {
+                mainDialog.WorldPosition += new Vector3(0, 24, 0);
+            }
+            if (mainDialog.WorldPosition.y + 24 > Main.Top)
+            {
+                mainDialog.WorldPosition += new Vector3(0, Main.Top - 24, 0);
+            }
+
+            DialogPopup spellDialog;
+
+            mainDialog[0].Set("Spells", () =>
+            {
+                spellDialog = new DialogPopup(Assets.Dialogs.BigDialogPrefab);
+                for (int i = 0; i < spellDialog._items.Count; i++)
+                {
+                    spellDialog[i].Set("Pattern " + i, () =>
+                    {
+                        Debug.Log("Pattern selected");
+                        mainDialog.Dispose();
+                        spellDialog.Dispose();
+
+                        var choice = new IBulletPattern[]
+                        {
+                            BulletPatterns.LToR,
+                            BulletPatterns.LToR,
+                            BulletPatterns.LToR,
+                        };
+
+                        onPatternChoice(choice);
+                    });
+                }
+            });
+
+            mainDialog[1].Set("Edit", () =>
+            {
+                spellDialog = new DialogPopup(Assets.Dialogs.BigDialogPrefab);
+                spellDialog[0].Set("Nope", null);
+            });
         }
 
         public IEnumerator DoMove(Role role)
@@ -174,10 +225,10 @@ namespace Hectic7
                 var speedMod = Input.GetKey(KeyCode.LeftShift) ? 0.5f : 1f;
                 RealPosition += input * speed * speedMod * Time.deltaTime;
 
-                if(Control == ControlScheme.Player)
-                {
-                    Debug.Log(">> player move " + (input * speed * speedMod) + " to " + RealPosition);
-                }
+                //if(Control == ControlScheme.Player)
+                //{
+                //    Debug.Log(">> player move " + (input * speed * speedMod) + " to " + RealPosition);
+                //}
 
                 RealPosition = Main.ClampToMap(RealPosition, Section, Size);
                 RealPosition.z = 1f;

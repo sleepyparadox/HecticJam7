@@ -92,20 +92,26 @@ public class UnityObject
 
     public virtual void Dispose()
     {
+        Debug.Log("Disposing " + (GameObject == null ? "null" : GameObject.name) + " a " + this);
+
         if (OnDispose != null)
             OnDispose.Fire(this);
         if (GameObject != null)
             UnityEngine.Object.Destroy(GameObject);
     }
         
-    public GameObject FindChild(string child)
+    public GameObject FindChild(string childName)
     {
-        return GameObject.transform.FindChild(child).gameObject;
+        var child = GameObject.transform.FindChild(childName);
+        if (child == null)
+            Debug.LogWarning("Cannot find child " + GameObject.name + "/" + childName);
+        return child == null ? null : child.gameObject; 
     }
 
-    public T0 FindChildComponent<T0>(string child) where T0 : Component
+    public T0 FindChildComponent<T0>(string childName) where T0 : Component
     {
-        return GameObject.transform.FindChild(child).GetComponent<T0>();
+        var child = GameObject.transform.FindChild(childName);
+        return child.GetComponent<T0>();
     }
 
     public void SetLayer(int layer, bool recursive)

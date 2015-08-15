@@ -24,7 +24,7 @@ namespace Hectic7
         public Timer()
             : base(Assets.TimerPrefab)
         {
-            _timerText = FindChildComponent<TextMesh>("Text");
+            _timerText = new UnityObject(FindChild("Line")).FindChildComponent<TextMesh>("Text");
         }
 
     }

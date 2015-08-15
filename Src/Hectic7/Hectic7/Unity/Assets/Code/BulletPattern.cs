@@ -32,7 +32,7 @@ namespace Hectic7
             {
                 var bullet = new Bullet(attacker, BulletType.Bullet8);
                 bullet.Center = new Vector3((float)i / (numberOfBullets - 1) * Main.MapSize.x, direction == Direction.Down ? Main.Top : Main.Bottom);
-                bullet.Velocity = (direction == Direction.Down ? Vector3.down : Vector3.up) * 10f;   
+                bullet.Velocity = (direction == Direction.Down ? Vector3.down : Vector3.up) * 20f;   
 
                 yield return TinyCoro.Wait(timePerBullet);
             }
