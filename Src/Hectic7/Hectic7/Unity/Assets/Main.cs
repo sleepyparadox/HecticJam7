@@ -11,10 +11,11 @@ namespace Hectic7
     public class Main : MonoBehaviour
     {
         public static Vector3 MapSize = new Vector3(160, 144);
-        public static Vector3 ClampToMap(Vector3 src, Direction section)
+        public static Vector3 ClampToMap(Vector3 src, Direction section, Vector3 size)
         {
-            return new Vector3(Mathf.Clamp(src.x, Left, Right), Mathf.Clamp(src.y, Bottom, Top), src.z);
-            //if (section == Direction.Up)
+            //return src;
+            return new Vector3(Mathf.Clamp(src.x, Left , Right - size.x ), Mathf.Clamp(src.y, Bottom , Top - size.x), src.z);
+            //if (section == Direction.Up) + (size.y 
             //{
             //    return new Vector3(Mathf.Clamp(src.x, Left, Right), Mathf.Clamp(src.y, Middle, Top), src.z);
             //}
@@ -56,19 +57,22 @@ namespace Hectic7
             MenuRenderer = new MenuRenderer();
             Timer = new Timer();
 
+            var playerSpeed = 75f;
+            var botSpeed = 30f;
+
             var parties = new Marionette[][]
             {
                 new Marionette[]
                 {
-                    new Marionette(ControlScheme.Player, Direction.Down, Assets.Mars.Mar00Prefab, 50f, 50f),
-                    new Marionette(ControlScheme.Player, Direction.Down, Assets.Mars.Mar00Prefab, 50f, 50f),
-                    new Marionette(ControlScheme.Player, Direction.Down, Assets.Mars.Mar00Prefab, 50f, 50f),
+                    new Marionette(ControlScheme.Player, Direction.Down, Assets.Mars.Mar00Prefab, playerSpeed, playerSpeed),
+                    new Marionette(ControlScheme.Player, Direction.Down, Assets.Mars.Mar00Prefab, playerSpeed, playerSpeed),
+                    new Marionette(ControlScheme.Player, Direction.Down, Assets.Mars.Mar00Prefab, playerSpeed, playerSpeed),
                 },
                 new Marionette[]
                 {
-                    new Marionette(ControlScheme.Ai, Direction.Up, Assets.Mars.Mar01Prefab, 50f, 40f),
-                    new Marionette(ControlScheme.Ai, Direction.Up, Assets.Mars.Mar01Prefab, 50f, 40f),
-                    new Marionette(ControlScheme.Ai, Direction.Up, Assets.Mars.Mar01Prefab, 50f, 40f),
+                    new Marionette(ControlScheme.Ai, Direction.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed),
+                    new Marionette(ControlScheme.Ai, Direction.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed),
+                    new Marionette(ControlScheme.Ai, Direction.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed),
                 },
             };
 

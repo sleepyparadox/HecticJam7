@@ -7,15 +7,38 @@ using UnityEngine;
 
 namespace Hectic7
 {
+    public enum BulletType
+    {
+        Bullet8,
+        Bullet16,
+    }
     public class Bullet : UnityObject
     {
+        public Vector3 RealPosition;
+        public Vector3 Size;
+        public Vector3 Center
+        {
+            get
+            {
+                return RealPosition + (Size * 0.5f);
+            }
+            set
+            {
+                RealPosition = value - (Size * 0.5f);
+            }
+        }
+
         public readonly UnityObject Owner;
         public Vector3 Velocity;
-        public Bullet(UnityObject owner, float scale = 50f)
-            : base(GameObject.CreatePrimitive(PrimitiveType.Sphere))
+        public Bullet(UnityObject owner, BulletType bulletType)
+            : base(PrefabFromType(bulletType))
         {
+            if (bulletType == BulletType.Bullet8)
+                Size = new Vector3(8, 8, 0);
+            else
+                Size = new Vector3(16, 16, 0);
+
             Owner = owner;
-            Transform.localScale = Vector3.one * scale;
             UnityFixedUpdate += FixedUpdate;
 
             Main.S.ActiveBullets.Add(this);
@@ -23,18 +46,28 @@ namespace Hectic7
         }
         private void FixedUpdate(UnityObject me)
         {
-            WorldPosition += Velocity * Time.fixedDeltaTime;
+            RealPosition += Velocity * Time.fixedDeltaTime;
 
-            if (WorldPosition.x < Main.Left)
+            if (RealPosition.x - (Size.x * 0.5f) < Main.Left)
                 Velocity.x *= -1f;
-            if (WorldPosition.x > Main.Right)
+            if (RealPosition.x + (Size.x * 0.5f) > Main.Right)
                 Velocity.x *= -1f;
 
-            if(WorldPosition.y < Main.Bottom
-                || WorldPosition.y > Main.Top)
+            if((RealPosition.y - (Size.y * 0.5f) < Main.Bottom && Velocity.y < 0)
+                || (RealPosition.y + (Size.y * 0.5f) > Main.Top && Velocity.y > 0))
             {
                 Dispose();
             }
+
+            WorldPosition = RealPosition.Snap();
+        }
+
+        static PrefabAsset PrefabFromType(BulletType type)
+        {
+            if (type == BulletType.Bullet8)
+                return Assets.Bullets.Bullet8Prefab;
+            else
+                return Assets.Bullets.Bullet16Prefab;
         }
     }
 }

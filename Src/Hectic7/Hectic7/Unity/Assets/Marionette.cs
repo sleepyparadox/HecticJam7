@@ -26,9 +26,21 @@ namespace Hectic7
         public static float HitRadius { get { return 2f; } }
 
         public float MyHp { get; set; }
-
-
         private float _aiSteer = Mathf.PI;
+
+        public Vector3 RealPosition;
+        public Vector3 Size = new Vector3(16, 16, 0);
+        public Vector3 Center
+        {
+            get
+            {
+                return RealPosition + (Size * 0.5f);
+            }
+            set
+            {
+                RealPosition = value - (Size * 0.5f);
+            }
+        }
 
         public Marionette(ControlScheme control, Direction section, PrefabAsset sprite,  float speedDefence, float speedAttack)
             : base(sprite)
@@ -41,12 +53,14 @@ namespace Hectic7
 
             GameObject.name = GetType().Name + "(" + Control + ")";
 
-            WorldPosition = Main.GetStartingPos(section);
+            Center = Main.GetStartingPos(section);
+            WorldPosition = RealPosition.Snap();
         }
 
         public void ResetPosition()
         {
-            WorldPosition = Main.GetStartingPos(Section);
+            Center = Main.GetStartingPos(Section);
+            WorldPosition = RealPosition.Snap();
         }
 
         public IEnumerator DoTurn(Marionette defender)
@@ -157,9 +171,15 @@ namespace Hectic7
                 }
 
                 var speedMod = Input.GetKey(KeyCode.LeftShift) ? 0.5f : 1f;
-                WorldPosition += input * speed * speedMod * Time.deltaTime;
+                RealPosition += input * speed * speedMod * Time.deltaTime;
 
-                WorldPosition = Main.ClampToMap(WorldPosition, Section);
+                if(Control == ControlScheme.Player)
+                {
+                    Debug.Log(">> player move " + (input * speed * speedMod) + " to " + RealPosition);
+                }
+
+                RealPosition = Main.ClampToMap(RealPosition, Section, Size);
+                WorldPosition = RealPosition.Snap();
 
                 if (role == Role.Defending)
                 {

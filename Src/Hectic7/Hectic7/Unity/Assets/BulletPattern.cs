@@ -25,7 +25,9 @@ namespace Hectic7
     {
         public IEnumerator DoPreform(Marionette attacker, Marionette defender, Direction direction)
         {
-            new Bullet(attacker).WorldPosition = attacker.WorldPosition;
+            
+
+            
 
             var elapsed = 0f;
             while (elapsed < 100f)

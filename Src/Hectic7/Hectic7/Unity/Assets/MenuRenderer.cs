@@ -175,6 +175,11 @@ namespace Hectic7
 
             return val;
         }
+        public static Vector3 Snap(this Vector3 src)
+        {
+            //return src;
+            return new Vector3(Mathf.Round(src.x), Mathf.Round(src.y), Mathf.Round(src.z));
+        }
     }
    
 }
