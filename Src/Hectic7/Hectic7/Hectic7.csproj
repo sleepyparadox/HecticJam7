@@ -49,10 +49,12 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Unity\Assets\Assets.cs" />
     <Compile Include="Unity\Assets\Code\Bullet.cs" />
+    <Compile Include="Unity\Assets\Code\ChattyDialogPopup.cs" />
     <Compile Include="Unity\Assets\Code\DialogPopup.cs" />
     <Compile Include="Unity\Assets\Code\Direction.cs" />
     <Compile Include="Unity\Assets\Code\BulletPatterns.cs" />
     <Compile Include="Unity\Assets\Code\Main.cs" />
+    <Compile Include="Unity\Assets\Code\MapScroller.cs" />
     <Compile Include="Unity\Assets\Code\Marionette.cs" />
     <Compile Include="Unity\Assets\Code\MenuItem.cs" />
     <Compile Include="Unity\Assets\Code\HecticHelper.cs" />

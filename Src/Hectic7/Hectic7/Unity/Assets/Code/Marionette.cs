@@ -10,8 +10,8 @@ namespace Hectic7
 {
     public enum ControlScheme
     {
-        Ai,
-        Player,
+        Player = 0,
+        Ai = 1,
     }
     public class Marionette : UnityObject
     {
@@ -54,13 +54,13 @@ namespace Hectic7
 
             GameObject.name = GetType().Name + "(" + Control + ")";
 
-            Center = Main.GetStartingPos(section);
+            Center = Main.GetStartingPos(this);
             WorldPosition = RealPosition.Snap();
         }
 
         public void ResetPosition()
         {
-            Center = Main.GetStartingPos(Section);
+            Center = Main.GetStartingPos(this);
             WorldPosition = RealPosition.Snap();
 
             Debug.Log("Set " + this + " to " + WorldPosition);
@@ -68,6 +68,7 @@ namespace Hectic7
 
         public IEnumerator DoTurn(Marionette defender)
         {
+            Main.S.Timer.InfiniteTime = true;
             //TODO choose pattern
             Debug.Log(this + " start turn vs " + defender);
 
@@ -76,7 +77,17 @@ namespace Hectic7
 
             if(Control == ControlScheme.Ai)
             {
-                selectedPattern = AiChoosePattern(defender);
+                string patternName;
+                selectedPattern = AiChoosePattern(defender, out patternName);
+
+                var text = new string[]
+                {
+                    "Opponent used",
+                    patternName
+                };
+
+                var patternMessage = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(text));
+                yield return TinyCoro.Join(patternMessage);
             }
             else
             {
@@ -105,7 +116,12 @@ namespace Hectic7
             }
             if (!defender.Alive)
             {
-                Debug.Log("Turn end because !defender.Alive");
+                var text = new string[]
+                {
+                    (defender.Control == ControlScheme.Player ? "You" : "Opponent") + " was defeated",
+                };
+                var patternMessage = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(text));
+                yield return TinyCoro.Join(patternMessage);
             }
             if (!timeOut.Alive)
             {
@@ -116,6 +132,8 @@ namespace Hectic7
             pattern.Kill();
             defendMove.Kill();
             attackMove.Kill();
+
+            Main.S.Timer.InfiniteTime = true;
         }
 
         IEnumerator DoPatternSequence(Marionette defender, IBulletPattern[] selectedPattern)
@@ -138,11 +156,13 @@ namespace Hectic7
             yield return TinyCoro.WaitUntil(() => patterns.All(p => !p.Alive));
         }
 
-        IBulletPattern[] AiChoosePattern(Marionette defender)
+        IBulletPattern[] AiChoosePattern(Marionette defender, out string patternName)
         {
-            var patternChoices = BulletPatterns.DefaultSets.Values.ToList();
+            var patternChoices = BulletPatterns.DefaultSets.ToList();
+            var index = UnityEngine.Random.Range(0, patternChoices.Count);
 
-            var func = patternChoices[UnityEngine.Random.Range(0, patternChoices.Count)];
+            patternName = patternChoices[index].Key;
+            var func = patternChoices[index].Value;
 
             return func();
         }

@@ -18,9 +18,12 @@ namespace Hectic7
         private int _index;
         private GameObject _cursor;
 
+        public event Action OnFixedClick;
+        public bool FixedInputDisabled = false;
+
         public MenuItem this[int i] { get { return _items[i]; } }
 
-        public DialogPopup(PrefabAsset popup, bool canBack = true)
+        public DialogPopup(PrefabAsset popup, bool canBack = true, bool fixedCursor = false)
             : base(popup)
         {
             _canBack = canBack;
@@ -42,10 +45,29 @@ namespace Hectic7
             }
             _cursor = FindChild("Cursor");
 
-            UnityUpdate += HandleInput;
+            if (fixedCursor)
+            {
+                UnityUpdate += HandleFixedCursorInput;
+            }
+            else
+            {
+                UnityUpdate += HandleChoiceInput;
+            }
         }
+        void HandleFixedCursorInput(UnityObject me)
+        {
+            if (FixedInputDisabled)
+                return;
 
-        void HandleInput(UnityObject me)
+            if(_enterKeys.Any(key => Input.GetKeyUp(key)))
+            {
+                if (OnFixedClick != null)
+                {
+                    OnFixedClick();
+                }
+            }
+        }
+        void HandleChoiceInput(UnityObject me)
         {
             //Exit
             if (_canBack

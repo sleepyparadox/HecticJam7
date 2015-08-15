@@ -77,11 +77,19 @@ public class UnityObject
         return GameObject.Find(name);
     }
 
-    public bool Exists
+    public bool Disposed
     {
         get
         {
-            return GameObject != null;
+            return GameObject == null;
+        }
+    }
+
+    public bool NotDisposed
+    {
+        get
+        {
+            return !Disposed;
         }
     }
 

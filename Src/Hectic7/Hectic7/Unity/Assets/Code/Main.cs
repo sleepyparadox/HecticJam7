@@ -16,9 +16,9 @@ namespace Hectic7
             return new Vector3(Mathf.Clamp(src.x, Left , Right - size.x ), Mathf.Clamp(src.y, Bottom , Top - size.x), src.z);
             
         }
-        public static Vector3 GetStartingPos(DirVertical section)
+        public static Vector3 GetStartingPos(Marionette mario)
         {
-            return new Vector3((section == DirVertical.Up ? 0.9f : 0.1f) * MapSize.x, (section == DirVertical.Up ? 0.9f : 0.1f) * MapSize.y);
+            return new Vector3((MapSize.x / 2f) - (mario.Size.x / 2f), (mario.Section == DirVertical.Up ? 0.8f : 0.1f) * MapSize.y);
         }
 
         public static float Left { get { return 0; } }
@@ -31,6 +31,7 @@ namespace Hectic7
         public List<Bullet> ActiveBullets = new List<Bullet>();
         
         public Timer Timer { get; private set; }
+        public MapScroller AutoScroller { get; private set; }
 
         void Awake()
         {
@@ -45,7 +46,28 @@ namespace Hectic7
 
         public IEnumerator DoGame()
         {
+            var willInto = true;
+            if (willInto)
+            {
+                var introText = new string[]
+                {
+                "Hello there!", "","","",
+                "Welcome to the land", "of puppets","","",
+                "Puppets are amazing", "puppets that can","puppet anything","",
+                "Here you will learn", "","","",
+                "grow", "","","",
+                "and puppet", "","","",
+                "Good luck!", "","","",
+                };
+
+                var introMsg = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(introText));
+                yield return TinyCoro.Join(introMsg);
+            }
+
+            AutoScroller = new MapScroller(new Vector3(0, 0, 50));
+
             Timer = new Timer();
+            Timer.InfiniteTime = true;
 
             var playerSpeed = 75f;
             var botSpeed = 30f;
@@ -55,29 +77,40 @@ namespace Hectic7
                 new Marionette[]
                 {
                     new Marionette(ControlScheme.Player, DirVertical.Down, Assets.Mars.Mar00Prefab, playerSpeed, playerSpeed),
-                    new Marionette(ControlScheme.Player, DirVertical.Down, Assets.Mars.Mar00Prefab, playerSpeed, playerSpeed),
-                    new Marionette(ControlScheme.Player, DirVertical.Down, Assets.Mars.Mar00Prefab, playerSpeed, playerSpeed),
                 },
                 new Marionette[]
                 {
                     new Marionette(ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed),
                     new Marionette(ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed),
                     new Marionette(ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed),
+                    new Marionette(ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed),
+                    new Marionette(ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed),
                 },
             };
 
-            yield return null;
+            var player = parties[(int)ControlScheme.Player].First();
+            player.ResetPosition();
+            player.SetActive(transform);
 
-            foreach (var p in parties)
+            foreach (var m in parties[(int)ControlScheme.Ai])
             {
-                foreach (var m in p)
-                {
-                    m.ResetPosition();
-                    m.SetActive(false);
-                }
+                m.ResetPosition();
+                m.SetActive(false);
             }
 
-            yield return null;
+            if (willInto)
+            {
+                //Chill for a bit
+                var freeRoam = TinyCoro.SpawnNext(() => player.DoMove(Role.Attacking));
+                yield return TinyCoro.Wait(8f);
+                freeRoam.Kill();
+            }
+
+            //First puppet msg
+            {
+                var msg = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(new[] { "A puppet appeared!" }));
+                yield return TinyCoro.Join(msg);
+            }
 
             //While both parties can fight
             while (parties.All(p => p.Any(m => m.Alive)))
@@ -92,11 +125,11 @@ namespace Hectic7
                         }
                     }
 
-                    var party = parties[iParty];
-                    var otherParty = parties[iParty == 0 ? 1 : 0];
+                    var attackingParty = parties[iParty];
+                    var defendingParty = parties[iParty == 0 ? 1 : 0];
 
-                    var attacker = party.FirstOrDefault(m => m.Alive);
-                    var defender = otherParty.FirstOrDefault(m => m.Alive);
+                    var attacker = attackingParty.FirstOrDefault(m => m.Alive);
+                    var defender = defendingParty.FirstOrDefault(m => m.Alive);
 
                     if (attacker == null || defender == null)
                         break;
@@ -110,17 +143,42 @@ namespace Hectic7
                     var bullets = new List<Bullet>(Main.S.ActiveBullets);
                     foreach (var b in bullets)
                         b.Dispose();
+
+                    defender.SetActive(defender.Alive);
+
+                    if (!defender.Alive
+                        && defender.Control == ControlScheme.Ai)
+                    {
+                        if (defendingParty.Any(m => m.Alive))
+                        {
+                            //Chill for a bit
+                            var freeRoam = TinyCoro.SpawnNext(() => attacker.DoMove(Role.Attacking));
+                            yield return TinyCoro.Wait(5f);
+                            freeRoam.Kill();
+
+                            var msg = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(new[] { "Another puppet appeared!" }));
+                            yield return TinyCoro.Join(msg);
+                        }
+                        else
+                        {
+                            var msg = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(new[] { "You win!" }));
+                            yield return TinyCoro.Join(msg);
+                        }
+                    }
+                    else if (!defender.Alive
+                      && defender.Control == ControlScheme.Ai)
+                    {
+                        var msg = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(new[] { "Game Over" }));
+                        yield return TinyCoro.Join(msg);
+                    }
                 }
             }
 
-            Debug.Log("Game over");
-            //Stop all movement
-            for (int j = 0; j < Main.S.ActiveBullets.Count; j++)
+            //Retry msg
             {
-                Main.S.ActiveBullets[j].UnityFixedUpdate = null;
+                var msg = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(new[] { "Retry?" }));
+                yield return TinyCoro.Join(msg);
             }
-
-            yield return TinyCoro.Wait(1);
 
             Application.LoadLevel(0);
         }
