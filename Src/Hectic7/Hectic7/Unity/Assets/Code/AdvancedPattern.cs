@@ -87,14 +87,27 @@ namespace Hectic7
     public class AdvanceSet : List<AdvancedPattern>
     {
         public string Name;
+        public AdvanceSet()
+        {
+
+        }
+        public AdvanceSet(string name, params AdvancedPattern[] phases)
+        {
+            Name = name;
+            AddRange(phases);
+        }
+        public AdvanceSet(params AdvancedPattern[] phases)
+        {
+            AddRange(phases);
+        }
     }
 
     public class AdvancedPattern
     {
-        public const float PhaseDuration = 5f;
+        public const float PhaseDuration = 3f;
 
         static List<BulletOrigin> Origins = Enum.GetValues(typeof(BulletOrigin)).Cast<BulletOrigin>().ToList();
-        static List<BulletDirection> Directions = Enum.GetValues(typeof(BulletDirection)).Cast<BulletDirection>().ToList();
+        static List<BulletMovement> Directions = Enum.GetValues(typeof(BulletMovement)).Cast<BulletMovement>().ToList();
         static List<BulletShape> Shapes = Enum.GetValues(typeof(BulletShape)).Cast<BulletShape>().ToList();
         static List<BulletRotation> Rotations = Enum.GetValues(typeof(BulletRotation)).Cast<BulletRotation>().ToList();
         static List<BulletFill> Fills = Enum.GetValues(typeof(BulletFill)).Cast<BulletFill>().ToList();
@@ -104,7 +117,7 @@ namespace Hectic7
 
         public int Slot;
         public BulletOrigin Origin { get; set; }
-        public BulletDirection Direction { get; set; }
+        public BulletMovement Direction { get; set; }
         public BulletShape Shape { get; set; }
         public BulletRotation Rotation { get; set; }
         public BulletFill Fill { get; set; }
@@ -112,33 +125,229 @@ namespace Hectic7
         public BulletType BulletType { get; set; }
         public BulletSpeed BulletSpeed { get; set; }
 
+        public AdvancedPattern()
+        {
+
+        }
+
+        public AdvancedPattern(AdvancedPattern other)
+        {
+            Origin = other.Origin;
+            Direction = other.Direction;
+            Shape = other.Shape;
+            Rotation = other.Rotation;
+            Fill = other.Fill;
+            BulletCount = other.BulletCount;
+            BulletType = other.BulletType;
+            BulletSpeed = other.BulletSpeed;
+        }
+
+        public AdvancedPattern Clone(Action<AdvancedPattern> postEdit = null)
+        {
+            var p = new AdvancedPattern(this);
+            if (postEdit != null)
+                postEdit(p);
+            return p;
+        }
+
         public IEnumerator DoPreform(Marionette attacker, Marionette defender, DirVertical direction)
         {
-            yield break;
+            var start = GetStartPos(direction);
+            var count = GetBulletCount(BulletCount);
+            //var shootDir = GetDirection(Direction);
+            var speed = GetSpeed(BulletSpeed);
+            var fillTime = GetFillTime(Fill);
+
+            var bullets = new List<Bullet>();
+
+            var randTurn = speed * 0.25f * (UnityEngine.Random.Range(0, 100) >= 50 ? -1 : 1);
+
+            for (var i = 0; i < count; ++i)
+            {
+                float n;
+
+                if(count == 1)
+                {
+                    n = Shape == BulletShape.LineFloor || Shape == BulletShape.LineSide ? 0.5f : 0f;
+                }
+                else
+                {
+                    n = (float)i / (count - 1);
+                }
+
+                if (Fill == BulletFill.SlowAlt)
+                    n = 1f - n;
+
+                var bullet = bullets.AddNew(new Bullet(attacker, BulletType));
+
+                if (Shape == BulletShape.LineFloor)
+                {
+                    bullet.Center = new Vector3(n * Main.MapSize.x, start.y);
+                    bullet.Velocity = Vector3.up * speed * (direction == DirVertical.Down ? -1f : 1f);
+                }
+                else if (Shape == BulletShape.LineSide)
+                {
+                    bullet.Center = new Vector3(start.x, n * Main.MapSize.y);
+                    if(Origin == BulletOrigin.Left)
+                        bullet.Velocity = Vector3.right * speed;
+                    else if (Origin == BulletOrigin.Right)
+                        bullet.Velocity = Vector3.left * speed;
+                    else
+                        bullet.Velocity = Vector3.up * speed * (direction == DirVertical.Down ? -1f : 1f);
+                }
+                else if (Shape == BulletShape.Circle)
+                {
+                    var angle = n * Mathf.PI * 2f;
+                    bullet.Center = start + (new Vector3(Mathf.Sin(angle), Mathf.Cos(angle)) * 16);
+                    bullet.Velocity = (bullet.Center - start).normalized * speed;
+                }
+                else
+                {
+                    bullet.Center = start;
+                    bullet.Velocity = Vector3.up * speed * (direction == DirVertical.Down ? -1f : 1f);
+                }
+
+
+                if(Mathf.Abs(bullet.Velocity.x) > Mathf.Abs(bullet.Velocity.y))
+                {
+                    bullet.Velocity.y += randTurn;
+                }
+                else
+                {
+                    var steerAmount = 0f;
+                    if (n >= 0.5f)
+                        steerAmount = 1f;
+                    else if (n < 0.5f)
+                        steerAmount = -1f;
+
+                    bullet.Velocity.x += randTurn * steerAmount;
+                }
+
+                if (fillTime > 0f && count > 1)
+                {
+                    var delayPerBullet = fillTime / count;
+                    yield return TinyCoro.Wait(delayPerBullet);
+                }
+            }
+
+            while (bullets.Any(b => b.NotDisposed))
+                yield return null;
+        }
+
+        private float GetFillTime(BulletFill fill)
+        {
+            switch (fill)
+            {
+                case BulletFill.Instant:
+                    return 0f;
+                case BulletFill.Slow:
+                case BulletFill.SlowAlt:
+                    return AdvancedPattern.PhaseDuration;
+            }
+            throw new NotImplementedException();
+        }
+
+        float GetSpeed(BulletSpeed speed)
+        {
+            switch (speed)
+            {
+                case BulletSpeed.Slow:
+                    return 10f;
+                case BulletSpeed.Medium:
+                    return 20f;
+                case BulletSpeed.Fast:
+                    return 30f;
+                case BulletSpeed.CrazyFast:
+                    return 40f;
+            }
+            throw new NotImplementedException();
+        }
+
+        //Vector3 GetDirection(BulletMovement bulletDir, DirVertical vertDir)
+        //{
+        //    var dir = Vector3.zero;
+        //    switch (bulletDir)
+        //    {
+        //        case BulletMovement.Straight:
+        //            dir = Vector3.up;
+        //            break;
+        //    }
+
+        //    if (vertDir == DirVertical.Down)
+        //        dir.y *= -1f;
+        //    return dir;
+        //}
+
+        int GetBulletCount(BulletCount count)
+        {
+            switch (count)
+            {
+                case BulletCount.One:
+                    return 1;
+                case BulletCount.Few:
+                    return 3;
+                case BulletCount.Many:
+                    return 5;
+                case BulletCount.Lots:
+                    return 10;
+                case BulletCount.Hell:
+                    return 15;
+            }
+            throw new NotImplementedException();
+        }
+
+        Vector3 GetStartPos(DirVertical direction)
+        {
+            switch(Origin)
+            {
+                case BulletOrigin.Bottom:
+                    return new Vector3(Main.MapSize.x / 2f, direction == DirVertical.Down ? Main.Top : Main.Bottom);
+                case BulletOrigin.Middle:
+                    return Main.MapSize / 2f;
+                case BulletOrigin.Left:
+                    return new Vector3(0f, Main.MapSize.y / 2f);
+                case BulletOrigin.Right:
+                    return new Vector3(Main.MapSize.x, Main.MapSize.y / 2f);
+            }
+            throw new NotImplementedException();
         }
 
         public static List<AdvanceSet> GeneratePatternSets(int count)
         {
-            var sets = new List<AdvanceSet>();
-            for (int iSet = 0; iSet < count; iSet++)
+            var cUpSmall = new AdvancedPattern()
             {
-                var set = sets.AddNew(new AdvanceSet());
-                for (int iPhase = 0; iPhase < 3; iPhase++)
-                {
-                    set.Add(new AdvancedPattern()
-                    {
-                        Origin = Origins.GetRandomVal(),
-                        Direction = Directions.GetRandomVal(),
-                        Shape = Shapes.GetRandomVal(),
-                        Rotation = Rotations.GetRandomVal(),
-                        Fill = Fills.GetRandomVal(),
-                        BulletCount = BulletCounts.GetRandomVal(),
-                        BulletType = BulletTypes.GetRandomVal(),
-                        BulletSpeed = BulletSpeeds.GetRandomVal(),
-                    });
-                }
-                set.Name = Names.Adjectives.GetRandomVal() + " " + Names.Nouns.GetRandomVal();
-            }
+                Origin = BulletOrigin.Bottom,
+                Direction = BulletMovement.Straight,
+                Shape = BulletShape.LineFloor,
+                Fill = BulletFill.Instant,
+                BulletCount =  BulletCount.Many,
+                BulletType =  BulletType.BulletSmall,
+                BulletSpeed = BulletSpeed.Fast,
+            };
+
+            var cUpBig = new AdvancedPattern()
+            {
+                Origin = BulletOrigin.Bottom,
+                Direction = BulletMovement.Straight,
+                Shape = BulletShape.LineFloor,
+                Fill = BulletFill.Instant,
+                BulletCount = BulletCount.Few,
+                BulletType = BulletType.BulletLarge,
+                BulletSpeed = BulletSpeed.Slow,
+            };
+
+            var sets = new List<AdvanceSet>()
+            {
+                new AdvanceSet
+                (
+                    "Uptown Funk",
+                    cUpBig.Clone(),
+                    cUpSmall.Clone(),
+                    cUpSmall.Clone()
+                ),
+
+            };
+            
             return sets;
         }
     }
@@ -182,9 +391,9 @@ namespace Hectic7
                 var fields = new List<FieldEntry>()
                 {
                     new FieldEntry(typeof(BulletOrigin)),
-                    new FieldEntry(typeof(BulletDirection)),
+                    new FieldEntry(typeof(BulletMovement)),
                     new FieldEntry(typeof(BulletShape)),
-                    new FieldEntry(typeof(BulletRotation)),
+                    //new FieldEntry(typeof(BulletRotation)),
                     new FieldEntry(typeof(BulletFill)),
                     new FieldEntry(typeof(BulletCount)),
                     new FieldEntry(typeof(BulletType)),
@@ -242,9 +451,9 @@ namespace Hectic7
                     var phase = new AdvancedPattern()
                     {
                         Origin = fields.EnumFromFields<BulletOrigin>(),
-                        Direction = fields.EnumFromFields<BulletDirection>(),
+                        Direction = fields.EnumFromFields<BulletMovement>(),
                         Shape = fields.EnumFromFields<BulletShape>(),
-                        Rotation = fields.EnumFromFields<BulletRotation>(),
+                        //Rotation = fields.EnumFromFields<BulletRotation>(),
                         Fill = fields.EnumFromFields<BulletFill>(),
                         BulletCount = fields.EnumFromFields<BulletCount>(),
                         BulletType = fields.EnumFromFields<BulletType>(),
@@ -279,14 +488,7 @@ namespace Hectic7
                         {
                             var clone = new AdvancedPattern()
                             {
-                                Origin = phase.Origin,
-                                Direction = phase.Direction,
-                                Shape = phase.Shape,
-                                Rotation = phase.Rotation,
-                                Fill = phase.Fill,
-                                BulletCount = phase.BulletCount,
-                                BulletType = phase.BulletType,
-                                BulletSpeed = phase.BulletSpeed,
+                                
                             };
                             phases.Add(clone);
                         }
@@ -316,28 +518,29 @@ namespace Hectic7
     public enum BulletOrigin
     {
         Bottom,
-        BottomLeft,
-        BottomRight,
-        BottomBoth,
+        //BottomLeft,
+        //BottomRight,
+        //BottomBoth,
         Left,
         Right,
+        Middle,
     }
 
-    public enum BulletDirection
+    public enum BulletMovement
     {
-        Up,
-        Left,
-        Right,
-        UpLeft,
-        UpRight
+        Straight
     }
 
     public enum BulletShape
     {
-        Line,
+        [PatternAttribute(0)]
+        LineFloor,
+        [PatternAttribute(2)]
+        LineSide,
 
         [PatternAttribute(6)]
         Circle,
+
         [PatternAttribute(6)]
         Box,
         
@@ -347,10 +550,10 @@ namespace Hectic7
     {
         None,
 
-        [PatternAttribute(6)]
-        Clock,
-        [PatternAttribute(6)]
-        Counter,
+        //[PatternAttribute(6)]
+        //Clock,
+        //[PatternAttribute(6)]
+        //Counter,
     }
 
     public enum BulletCount
@@ -363,6 +566,8 @@ namespace Hectic7
         Many,
         [PatternAttribute(8)]
         Lots,
+        [PatternAttribute(12)]
+        Hell,
     }
 
     public enum BulletFill
@@ -375,12 +580,11 @@ namespace Hectic7
     public enum BulletType
     {
         [PatternAttribute(0)]
-        Bullet8,
+        BulletSmall,
         [PatternAttribute(4)]
-        Bullet16,
+        BulletLarge,
     }
 
-   
 
     public enum BulletSpeed
     {
@@ -390,6 +594,8 @@ namespace Hectic7
         Medium,
         [PatternAttribute(8)]
         Fast,
+        [PatternAttribute(12)]
+        CrazyFast,
     }
 
     public enum Phases

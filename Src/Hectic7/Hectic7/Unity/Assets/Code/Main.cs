@@ -122,7 +122,7 @@ namespace Hectic7
             while (parties.All(p => p.Any(m => m.Alive)))
             {
                 Music.SetTrack(AudioTrack.Combat);
-                for (int iParty = 0; iParty < parties.Length; iParty++)
+                for (int iParty = 0; iParty < parties.Length; /*iterated below*/)
                 {
                     foreach (var p in parties)
                     {
@@ -179,6 +179,10 @@ namespace Hectic7
                         Music.SetTrack(AudioTrack.Menu);
                         var msg = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(new[] { "Game Over" }));
                         yield return TinyCoro.Join(msg);
+                    }
+                    else
+                    {
+                        iParty++;
                     }
                 }
             }

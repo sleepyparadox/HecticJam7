@@ -31,7 +31,7 @@ namespace Hectic7
         public Bullet(UnityObject owner, BulletType bulletType)
             : base(PrefabFromType(bulletType))
         {
-            if (bulletType == BulletType.Bullet8)
+            if (bulletType == BulletType.BulletSmall)
                 Size = new Vector3(8, 8, 0);
             else
                 Size = new Vector3(16, 16, 0);
@@ -62,7 +62,7 @@ namespace Hectic7
 
         static PrefabAsset PrefabFromType(BulletType type)
         {
-            if (type == BulletType.Bullet8)
+            if (type == BulletType.BulletSmall)
                 return Assets.Bullets.Bullet8Prefab;
             else
                 return Assets.Bullets.Bullet16Prefab;
