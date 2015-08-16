@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Hectic7;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -63,6 +64,18 @@ public static class HecticHelper
     public static T GetRandomVal<T>(this List<T> src)
     {
         return src[UnityEngine.Random.Range(0, src.Count)];
+    }
+
+    public static T AddNew<T>(this List<T> list, T item)
+    {
+        list.Add(item);
+        return item;
+    }
+
+    public static T EnumFromFields<T>(this List<FieldEntry> fields)
+    {
+        var choice = fields.First(f => f.EnumType == typeof(T)).Choice.Value;
+        return (T)(object)choice;
     }
 }
    

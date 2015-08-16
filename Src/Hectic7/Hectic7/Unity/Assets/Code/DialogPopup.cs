@@ -15,13 +15,28 @@ namespace Hectic7
         public static List<DialogPopup> Stack = new List<DialogPopup>();
         public List<MenuItem> _items;
         private bool _canBack;
-        private int _index;
+        public int _index;
         private GameObject _cursor;
 
         public event Action OnFixedClick;
         public bool FixedInputDisabled = false;
 
         public MenuItem this[int i] { get { return _items[i]; } }
+
+        public string Title
+        {
+            set
+            {
+                var title = FindChild("Title");
+                if(title == null)
+                {
+                    Debug.LogWarning("Title not found");
+                    return;
+                }
+                var text = title.GetComponentsInChildren<TextMesh>().First();
+                text.text = value;
+            }
+        }
 
         public DialogPopup(PrefabAsset popup, bool canBack = true, bool fixedCursor = false)
             : base(popup)
@@ -59,7 +74,8 @@ namespace Hectic7
             if (FixedInputDisabled)
                 return;
 
-            if(_enterKeys.Any(key => Input.GetKeyUp(key)))
+            if(_enterKeys.Any(key => Input.GetKeyUp(key))
+                || _backKeys.Any(key => Input.GetKeyUp(key)))
             {
                 if (OnFixedClick != null)
                 {

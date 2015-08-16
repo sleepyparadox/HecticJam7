@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using UnityEngine;
 using UnityTools_4_6;
 
 namespace Hectic7
@@ -26,13 +28,71 @@ namespace Hectic7
                 customFieldName = typeof(T).Name;
             }
 
-           TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(new[] { "Pick a " + typeof(T).Name }));
+            var pickCoro = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(new[] { "Pick a " + typeof(T).Name }));
+            OnDispose += (u) => pickCoro.Kill();
         }
+    }
 
+    public class FieldEntry
+    {
+        public string CustomName;
+        public Type EnumType;
+        public int? Choice;
+        public int DefaultIndex = 0;
+        public bool ShowIntro = true;
+        public FieldEntry(Type enumType, string customName = null)
+        {
+            EnumType = enumType;
+            CustomName = customName;
+        }
+    }
+
+    public class DialogEnumPicker : DialogPopup
+    {
+        public Action<int> OnEnumValPicked;
+        public DialogEnumPicker(Type enumType, bool showIntro, string enumName = null, int defaultIndex = 0)
+            : base(Assets.Dialogs.BigDialogPrefab)
+        {
+            var pickData = Enum.GetValues(enumType);
+            for (int i = 0; i < pickData.Length; i++)
+            {
+                var temp = i;
+                var choiceName = Enum.GetName(enumType, i);
+                this[temp].Set(choiceName.ToString(), () =>
+                {
+                    OnEnumValPicked(temp);
+                    Dispose();
+                });
+            }
+
+            _index = defaultIndex;
+
+            if (string.IsNullOrEmpty(enumName))
+            {
+                enumName = enumType.Name;
+            }
+
+            enumName = enumName.Replace("Bullet", "");
+
+            Title = enumName;
+
+            if(showIntro)
+            {
+                var pickCoro = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(new[] { "Pick a " + enumName }));
+                OnDispose += (u) => pickCoro.Kill();
+            }
+        }
+    }
+
+    public class AdvanceSet : List<AdvancedPattern>
+    {
+        public string Name;
     }
 
     public class AdvancedPattern
     {
+        public const float PhaseDuration = 5f;
+
         static List<BulletOrigin> Origins = Enum.GetValues(typeof(BulletOrigin)).Cast<BulletOrigin>().ToList();
         static List<BulletDirection> Directions = Enum.GetValues(typeof(BulletDirection)).Cast<BulletDirection>().ToList();
         static List<BulletShape> Shapes = Enum.GetValues(typeof(BulletShape)).Cast<BulletShape>().ToList();
@@ -51,83 +111,206 @@ namespace Hectic7
         public BulletCount BulletCount { get; set; }
         public BulletType BulletType { get; set; }
         public BulletSpeed BulletSpeed { get; set; }
-        public string Name { get; set; }
 
-        public static List<AdvancedPattern> GeneratePatterns(int count)
+        public IEnumerator DoPreform(Marionette attacker, Marionette defender, DirVertical direction)
         {
-            var patterns = new List<AdvancedPattern>();
-            for (int i = 0; i < count; i++)
+            yield break;
+        }
+
+        public static List<AdvanceSet> GeneratePatternSets(int count)
+        {
+            var sets = new List<AdvanceSet>();
+            for (int iSet = 0; iSet < count; iSet++)
             {
-                var pattern = new AdvancedPattern()
+                var set = sets.AddNew(new AdvanceSet());
+                for (int iPhase = 0; iPhase < 3; iPhase++)
                 {
-                    Origin = Origins.GetRandomVal(),
-                    Direction = Directions.GetRandomVal(),
-                    Shape = Shapes.GetRandomVal(),
-                    Rotation = Rotations.GetRandomVal(),
-                    Fill = Fills.GetRandomVal(),
-                    BulletCount = BulletCounts.GetRandomVal(),
-                    BulletType = BulletTypes.GetRandomVal(),
-                    BulletSpeed = BulletSpeeds.GetRandomVal(),
-                    Name = Names.Adjectives.GetRandomVal() + " " + Names.Nouns.GetRandomVal(),
-                };
+                    set.Add(new AdvancedPattern()
+                    {
+                        Origin = Origins.GetRandomVal(),
+                        Direction = Directions.GetRandomVal(),
+                        Shape = Shapes.GetRandomVal(),
+                        Rotation = Rotations.GetRandomVal(),
+                        Fill = Fills.GetRandomVal(),
+                        BulletCount = BulletCounts.GetRandomVal(),
+                        BulletType = BulletTypes.GetRandomVal(),
+                        BulletSpeed = BulletSpeeds.GetRandomVal(),
+                    });
+                }
+                set.Name = Names.Adjectives.GetRandomVal() + " " + Names.Nouns.GetRandomVal();
             }
-            return patterns;
+            return sets;
         }
     }
     public static class AdvancedPatternEditor
     {
-        public static void BuildAndShowEditDialog()
+        public static IEnumerator DoBuildAndShowEditDialog(Marionette mario, int defaultSlotIndex = 0)
         {
-            var dialogs = new List<UnityObject>();
-            var editDialog = new DialogPopup(Assets.Dialogs.BigDialogPrefab, true);
-            dialogs.Add(editDialog);
-            for (int i = 0; i < 10; i++)
+            var phases = new List<AdvancedPattern>();
+
+            var slotDialog = new DialogPopup(Assets.Dialogs.BigDialogPrefab, true);
+            slotDialog._index = defaultSlotIndex;
+
+            var slots = mario.PatternSets.Select(p => p.Name).ToList();
+            if (slots.Count < slotDialog._items.Count)
+                slots.Add("New");
+
+            int? selectedSlot = null;
+            for (int i = 0; i < slots.Count; i++)
             {
-                editDialog[i].Set("Slot " + i, () =>
+                var temp = i;
+                slotDialog[i].Set(slots[i], () =>
                 {
-                    var spawnDialog = new DialogPicker<BulletOrigin>(Enum.GetValues(typeof(BulletOrigin)).Cast<BulletOrigin>().ToArray());
-                    dialogs.Add(spawnDialog);
-                    spawnDialog.OnItemPicked += (spawnType) =>
-                    {
-                        var typeDialog = new DialogPicker<BulletType>(Enum.GetValues(typeof(BulletType)).Cast<BulletType>().ToArray());
-                        dialogs.Add(typeDialog);
-                        typeDialog.OnItemPicked += (bulletType) =>
-                        {
-                            var countDialog = new DialogPicker<BulletCount>(Enum.GetValues(typeof(BulletCount)).Cast<BulletCount>().ToArray());
-                            dialogs.Add(countDialog);
-                            countDialog.OnItemPicked += (bulletCount) =>
-                            {
-                                var speedDialog = new DialogPicker<BulletSpeed>(Enum.GetValues(typeof(BulletSpeed)).Cast<BulletSpeed>().ToArray());
-                                dialogs.Add(speedDialog);
-                                speedDialog.OnItemPicked += (bulletSpeed) =>
-                                {
-                                    var name0Dialog = new DialogPicker<string>(Names.Adjectives.GetRandomVals(14), "Name");
-                                    dialogs.Add(name0Dialog);
-                                    name0Dialog.OnItemPicked += (name0) =>
-                                    {
-                                        var name1Dialog = new DialogPicker<string>(Names.Nouns.GetRandomVals(14), "Name");
-                                        dialogs.Add(name1Dialog);
-                                        name1Dialog.OnItemPicked += (name1) =>
-                                        {
-                                            var msgText = new[] { "Created " + name0 + " " + name1 };
-                                            var msg = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(msgText));
-                                            msg.OnFinished += (c, r) =>
-                                            {
-                                                foreach (var d in dialogs)
-                                                    d.Dispose();
-                                            };
-                                        };
-                                    };
-
-
-                                };
-                            };
-                        };
-
-                    };
+                    selectedSlot = temp;
                 });
             }
+
+            while (slotDialog.NotDisposed && !selectedSlot.HasValue)
+                yield return null;
+
+            slotDialog.Dispose();
+
+            //User quit
+            if (!selectedSlot.HasValue)
+            {
+                //Abandon edit
+                yield break;
+            }
+
+            while (phases.Count < 3)
+            {
+                var fields = new List<FieldEntry>()
+                {
+                    new FieldEntry(typeof(BulletOrigin)),
+                    new FieldEntry(typeof(BulletDirection)),
+                    new FieldEntry(typeof(BulletShape)),
+                    new FieldEntry(typeof(BulletRotation)),
+                    new FieldEntry(typeof(BulletFill)),
+                    new FieldEntry(typeof(BulletCount)),
+                    new FieldEntry(typeof(BulletType)),
+                    new FieldEntry(typeof(BulletSpeed)),
+                };
+
+                while (fields.Any(field => !field.Choice.HasValue))
+                {
+                    var field = fields.First(p => !p.Choice.HasValue);
+
+                    var fieldDialog = new DialogEnumPicker(field.EnumType, field.ShowIntro, field.CustomName);
+                    fieldDialog.OnEnumValPicked += (i) => field.Choice = i;
+
+                    field.ShowIntro = false;
+
+                    //Wait for choice
+                    while (fieldDialog.NotDisposed && !field.Choice.HasValue)
+                        yield return null;
+
+                    fieldDialog.Dispose();
+
+                    if (!field.Choice.HasValue)
+                    {
+                        var lastField = fields.LastOrDefault(f => f.Choice.HasValue);
+
+                        if (lastField == null)
+                        {
+                            var lastPhase = phases.LastOrDefault();
+
+                            Debug.Log("Return to slot select");
+                            
+                            var cancelMsg = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(new[] { "Canceled edit" }));
+                            //cancelMsg.OnFinished += (c, e) =>
+                            //{
+                            //    //Pick slot
+                            //    TinyCoro.SpawnNext(() => DoBuildAndShowEditDialog(mario, selectedSlot.Value));
+                            //};
+
+                            //Abandon thread!
+                            yield break;
+                        }
+
+                        Debug.Log("Return to " + lastField.EnumType.Name + "  select");
+
+                        //Retry choice
+                        lastField.DefaultIndex = lastField.Choice.Value;
+                        lastField.Choice = null;
+                    }
+
+                    //yield return null;
+                }
+
+                if (fields.All(f => f.Choice.HasValue))
+                {
+                    var phase = new AdvancedPattern()
+                    {
+                        Origin = fields.EnumFromFields<BulletOrigin>(),
+                        Direction = fields.EnumFromFields<BulletDirection>(),
+                        Shape = fields.EnumFromFields<BulletShape>(),
+                        Rotation = fields.EnumFromFields<BulletRotation>(),
+                        Fill = fields.EnumFromFields<BulletFill>(),
+                        BulletCount = fields.EnumFromFields<BulletCount>(),
+                        BulletType = fields.EnumFromFields<BulletType>(),
+                        BulletSpeed = fields.EnumFromFields<BulletSpeed>()
+                    };
+                    phases.Add(phase);
+
+                    var phasesChoices = Enum.GetValues(typeof(PhaseCount)).Cast<PhaseCount>().Take(3 - phases.Count).ToArray();
+                    var phaseDialog = new DialogPicker<PhaseCount>(phasesChoices, "Phases used");
+
+                    PhaseCount? phasesUsed = null;
+
+                    while (phaseDialog.NotDisposed && !selectedSlot.HasValue)
+                        yield return null;
+
+                    phaseDialog.Dispose();
+
+                    if (!phasesUsed.HasValue)
+                    {
+                        var lastField = fields.Last(f => f.Choice.HasValue);
+
+                        Debug.Log("Return to " + lastField.EnumType.Name + "  select");
+
+                        //Retry choice
+                        lastField.DefaultIndex = lastField.Choice.Value;
+                        lastField.Choice = null;
+                        continue;
+                    }
+                    else
+                    {
+                        for (var i = 1; i < (int)phasesUsed.Value; ++i)
+                        {
+                            var clone = new AdvancedPattern()
+                            {
+                                Origin = phase.Origin,
+                                Direction = phase.Direction,
+                                Shape = phase.Shape,
+                                Rotation = phase.Rotation,
+                                Fill = phase.Fill,
+                                BulletCount = phase.BulletCount,
+                                BulletType = phase.BulletType,
+                                BulletSpeed = phase.BulletSpeed,
+                            };
+                            phases.Add(clone);
+                        }
+                    }
+                }
+            }
+
+            var set = new AdvanceSet();
+            set.AddRange(phases);
+            set.Name = Names.Adjectives.GetRandomVal() + " " + Names.Nouns.GetRandomVal();
+
+            if (selectedSlot.Value > mario.PatternSets.Count)
+            {
+                mario.PatternSets.RemoveAt(selectedSlot.Value);
+            }
+            mario.PatternSets.Insert(selectedSlot.Value, set);
         }
+    }
+
+    public enum PhaseCount
+    {
+        One,
+        Two,
+        Three,
     }
 
     public enum BulletOrigin
@@ -226,7 +409,7 @@ namespace Hectic7
             "Regular",
             "Medical",
             "Greasy",
-            "Fluffy",
+            "Full",
             "Present",
             "Habitual",
             "Nostalgic",
@@ -238,10 +421,13 @@ namespace Hectic7
             "Fantastic",
             "Flawless",
             "Double",
+            "Spaghetti",
+            "Night",
         };
 
         public static List<string> Nouns = new List<string>()
         {
+            "Unlimited",
             "Night",
             "Trouble",
             "Doubt",

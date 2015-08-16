@@ -102,6 +102,11 @@ public class UnityObject
     {
         Debug.Log("Disposing " + (GameObject == null ? "null" : GameObject.name) + " a " + this);
 
+        if (Disposed)
+        {
+            return;
+        }
+
         if (OnDispose != null)
             OnDispose.Fire(this);
         if (GameObject != null)

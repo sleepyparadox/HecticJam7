@@ -54,7 +54,7 @@
     <Compile Include="Unity\Assets\Code\ChattyDialogPopup.cs" />
     <Compile Include="Unity\Assets\Code\DialogPopup.cs" />
     <Compile Include="Unity\Assets\Code\Direction.cs" />
-    <Compile Include="Unity\Assets\Code\BulletPatterns.cs" />
+    <Compile Include="Unity\Assets\Code\PatternsOld.cs" />
     <Compile Include="Unity\Assets\Code\Main.cs" />
     <Compile Include="Unity\Assets\Code\MapScroller.cs" />
     <Compile Include="Unity\Assets\Code\Marionette.cs" />
