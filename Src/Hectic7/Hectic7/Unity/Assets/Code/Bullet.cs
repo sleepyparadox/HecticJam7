@@ -7,11 +7,7 @@ using UnityEngine;
 
 namespace Hectic7
 {
-    public enum BulletType
-    {
-        Bullet8,
-        Bullet16,
-    }
+    
     public class Bullet : UnityObject
     {
         public Vector3 RealPosition;
@@ -31,7 +27,6 @@ namespace Hectic7
 
         public readonly UnityObject Owner;
         public Vector3 Velocity;
-        private bool _bounces;
 
         public Bullet(UnityObject owner, BulletType bulletType)
             : base(PrefabFromType(bulletType))

@@ -48,6 +48,8 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Unity\Assets\Assets.cs" />
+    <Compile Include="Unity\Assets\Code\AdvancedPattern.cs" />
+    <Compile Include="Unity\Assets\Code\AudioBehaviour.cs" />
     <Compile Include="Unity\Assets\Code\Bullet.cs" />
     <Compile Include="Unity\Assets\Code\ChattyDialogPopup.cs" />
     <Compile Include="Unity\Assets\Code\DialogPopup.cs" />

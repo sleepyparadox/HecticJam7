@@ -49,5 +49,20 @@ public static class HecticHelper
     {
         return new Vector3(src.x, src.y, 0);
     }
+
+    public static T[] GetRandomVals<T>(this List<T> src, int count)
+    {
+        var result = new T[count];
+        for (int i = 0; i < result.Length; i++)
+        {
+            result[i] = src[UnityEngine.Random.Range(0, src.Count)];
+        }
+        return result;
+    }
+
+    public static T GetRandomVal<T>(this List<T> src)
+    {
+        return src[UnityEngine.Random.Range(0, src.Count)];
+    }
 }
    

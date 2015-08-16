@@ -30,6 +30,8 @@ namespace Hectic7
 
         public Vector3 RealPosition;
         public Vector3 Size = new Vector3(16, 16, 0);
+        private List<AdvancedPattern> Patterns;
+
         public Vector3 Center
         {
             get
@@ -46,6 +48,8 @@ namespace Hectic7
         public Marionette(ControlScheme control, DirVertical section, PrefabAsset sprite,  float speedDefence, float speedAttack)
             : base(sprite)
         {
+            Patterns = AdvancedPattern.GeneratePatterns(4);
+
             Alive = true;
             SpeedDefence = speedDefence;
             SpeedAttack = speedAttack;
@@ -214,8 +218,7 @@ namespace Hectic7
 
             mainDialog[1].Set("Edit", () =>
             {
-                spellDialog = new DialogPopup(Assets.Dialogs.BigDialogPrefab);
-                spellDialog[0].Set("Nope", null);
+                AdvancedPatternEditor.BuildAndShowEditDialog();
             });
         }
 
@@ -248,6 +251,47 @@ namespace Hectic7
                 RealPosition = Main.ClampToMap(RealPosition, Section, Size);
                 RealPosition.z = 1f;
                 WorldPosition = RealPosition.Snap();
+
+                if(Control == ControlScheme.Player
+                    && DialogPopup.Stack.Count == 0
+                    && DialogPopup._backKeys.Any( key => Input.GetKeyUp(key)))
+                {
+                    var oldTrack = Main.S.Music.CurrentTrack;
+                    Main.S.Music.SetTrack(AudioTrack.Menu);
+                    Time.timeScale = 0f;
+                    var mainDialog = new DialogPopup(Assets.Dialogs.TinyDialogPrefab);
+                    mainDialog.OnDispose += (u) =>
+                    {
+                        Time.timeScale = 1f;
+                        Main.S.Music.SetTrack(oldTrack);
+                    };
+                    //mainDialog[0].Set("Info", () =>
+                    //{
+                    //    var infoDialog = new DialogPopup(Assets.Dialogs.TinyDialogPrefab);
+
+                    //    var msgText = new[]
+                    //    {
+                    //        "Hug the bottom", "to avoid enemy bullet", "patterns when", "encounter starts",
+                    //    };
+                    //    var msg = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(msgText));
+                    //});
+                    mainDialog[1].Set("Edit", () =>
+                    {
+                        AdvancedPatternEditor.BuildAndShowEditDialog();
+                    });
+                    mainDialog[0].Set("About", () =>
+                    {
+                        var msgText = new[]
+                        {
+                            "Created by Don Logan", "", "", "",
+                            "For Hectic Jam 7", "Theme: Puppet Master", "", "",
+                            "For GameBoy Jam 2015" , "Rules: Only 4 colors", "Rules: 160px x 144px", "",
+                            "Music by Jared Hahn", "", "", "",
+                        };
+                        var msg = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(msgText));
+                    });
+
+                }
 
                 if (role == Role.Defending)
                 {

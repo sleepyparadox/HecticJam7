@@ -9,8 +9,8 @@ namespace Hectic7
 {
     public class DialogPopup : UnityObject
     {
-        private List<KeyCode> _enterKeys = new List<KeyCode>() { KeyCode.Z, KeyCode.Space, KeyCode.Return };
-        private List<KeyCode> _backKeys = new List<KeyCode>() { KeyCode.X, KeyCode.Backspace, KeyCode.Escape };
+        public static List<KeyCode> _enterKeys = new List<KeyCode>() { KeyCode.Z, KeyCode.Space, KeyCode.Return };
+        public static List<KeyCode> _backKeys = new List<KeyCode>() { KeyCode.X, KeyCode.Backspace, KeyCode.Escape };
 
         public static List<DialogPopup> Stack = new List<DialogPopup>();
         public List<MenuItem> _items;

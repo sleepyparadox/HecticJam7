@@ -32,9 +32,11 @@ namespace Hectic7
         
         public Timer Timer { get; private set; }
         public MapScroller AutoScroller { get; private set; }
+        public AudioBehaviour Music { get; private set; }
 
         void Awake()
         {
+            DialogPopup.Stack.Clear();
             S = this;
             TinyCoro.SpawnNext(DoGame);
         }
@@ -46,7 +48,11 @@ namespace Hectic7
 
         public IEnumerator DoGame()
         {
-            var willInto = true;
+            var willInto = false;
+
+            Music = gameObject.GetComponentsInChildren<AudioBehaviour>().First();
+            Music.SetTrack(AudioTrack.Menu);
+
             if (willInto)
             {
                 var introText = new string[]
@@ -115,6 +121,7 @@ namespace Hectic7
             //While both parties can fight
             while (parties.All(p => p.Any(m => m.Alive)))
             {
+                Music.SetTrack(AudioTrack.Combat);
                 for (int iParty = 0; iParty < parties.Length; iParty++)
                 {
                     foreach (var p in parties)
@@ -149,6 +156,7 @@ namespace Hectic7
                     if (!defender.Alive
                         && defender.Control == ControlScheme.Ai)
                     {
+                        Music.SetTrack(AudioTrack.Menu);
                         if (defendingParty.Any(m => m.Alive))
                         {
                             //Chill for a bit
@@ -168,6 +176,7 @@ namespace Hectic7
                     else if (!defender.Alive
                       && defender.Control == ControlScheme.Ai)
                     {
+                        Music.SetTrack(AudioTrack.Menu);
                         var msg = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(new[] { "Game Over" }));
                         yield return TinyCoro.Join(msg);
                     }
