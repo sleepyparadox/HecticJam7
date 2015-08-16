@@ -74,6 +74,8 @@ namespace Hectic7
             if (FixedInputDisabled)
                 return;
 
+            _cursor.SetActive(Time.time % 1f > 0.5f);
+
             if(_enterKeys.Any(key => Input.GetKeyUp(key))
                 || _backKeys.Any(key => Input.GetKeyUp(key)))
             {

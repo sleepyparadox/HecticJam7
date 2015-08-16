@@ -49,6 +49,7 @@ namespace Hectic7
         public IEnumerator DoGame()
         {
             var willInto = true;
+            //willInto = false;
 
             Music = gameObject.GetComponentsInChildren<AudioBehaviour>().First();
             Music.SetTrack(AudioTrack.Menu);
@@ -73,48 +74,52 @@ namespace Hectic7
                     new Marionette(ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed,
                     new[]
                     {
-                        "#Look!", "no strings", "", "",
-                        "Stop that is", "dangerous", "", "",
-                        "#Stop me then", "", "", "",
+                        "#My aggression", "needs an outlet", "and you are", "the first",
+                        "#person I have", "found", "", "",
                     }),
                     new Marionette(ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed,
                     new[]
                     {
-                        "Who are you", "puppets?", "", "",
-                        "#We are puppets", "no more", "", "",
+                        "#Look!", "no strings on", "me", "",
+                        "I will just", "blast you out", "of the sky then", "",
+                        "#Eeeek!", "", "", "",
                     }),
                     new Marionette(ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed,
                     new[]
                     {
-                        "#I feel dizzy", "", "", "",
+                        "Is your sprite", "a cleric or", "a ninja?", "",
+                        "#I am a", "penguin", "puppet", "",
+                        "Really?!", "Ha", "", "",
+                        "#Well", "", "", "",
+                        "#What are", "you then?", "", "",
+                        "#Some kind of", "talking mushroom?", "", "",
+                        "No", "thats", "just a pony tail", "",
                     }),
                     new Marionette(ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed,
                     new[]
                     {
-                        "#Out of my way!", "", "", "",
-                        "Okay", "", "", "",
-                        "#Nah lets fight", "instead", "", "",
-                        "...", "", "", "",
-                        "Okay", "", "", "",
+                        "#TODO: WRITE CLEVER", "LINE HERE", "", "",
+                        "Whoops", "", "", "",
                     }),
-                    new Marionette(ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed,
-                    new[]
-                    {
-                        "Are there 7", "of you?", "", "",
-                        "#How did you", "know?", "", "",
-                        "I read the title", "screen", "", "",
-                    }),
+
                     new Marionette(ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed,
                     new[]
                     {
                         "Where did you", "learn all these", "spells?", "",
                         "#Harvard", "", "", "",
+                        "Penguins can", "go to havard?", "", "",
+                        "#I AM A", "NINJA", "", "",
+                        "#And my ", "classmates never", "saw me", "",
+                        "You didn't", "attend classes", "", "did you?",
+                        "#...", "", "", "",
                     }),
                     new Marionette(ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed,
                     new[]
                     {
-                        "So you are the ring leader?", "", "", "",
-                        "#Yes! I have", "the scissors!", "", "",
+                        "So ", "you are the", "leader?", "",
+                        "#Yes!", "you have done", "well to get", "this far miss",
+                        "#mushroom", "", "", "",
+                        "I AM NOT A", "MUSHROOM", "", "",
                     }),
                 },
             };
@@ -137,7 +142,7 @@ namespace Hectic7
 
                 var introText = new string[]
                 {
-                    "The bottom", "middle is","safe","",
+                    "I feel safe", "at the ","bottom of the","screen",
                 };
 
                 var tip = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(introText));
@@ -151,8 +156,6 @@ namespace Hectic7
 
             var intoDone = false;
             
-            
-
             //While both parties can fight
             while (parties.All(p => p.Any(m => m.Alive)))
             {
@@ -183,7 +186,7 @@ namespace Hectic7
                     {
                         //First puppet msg
                         intoDone = true;
-                        var msg = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(parties[(int)ControlScheme.Ai].First().Chat));
+                        var msg = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(defender.Chat));
                         yield return TinyCoro.Join(msg);
                     }
 
@@ -228,8 +231,7 @@ namespace Hectic7
                             yield return TinyCoro.Wait(5f);
                             freeRoam.Kill();
 
-                            var msg = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(defendingParty.First(p => p.Alive).Chat));
-                            yield return TinyCoro.Join(msg);
+                            intoDone = false;                           
                         }
                         else
                         {

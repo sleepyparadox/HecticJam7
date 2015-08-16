@@ -331,7 +331,7 @@ namespace Hectic7
                 Direction = BulletMovement.Straight,
                 Shape = BulletShape.LineFloor,
                 Fill = BulletFill.Instant,
-                BulletCount = BulletCount.Few,
+                BulletCount = BulletCount.Lots,
                 BulletType = BulletType.BulletLarge,
                 BulletSpeed = BulletSpeed.Slow,
             };
