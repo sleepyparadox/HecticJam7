@@ -48,27 +48,11 @@ namespace Hectic7
 
         public IEnumerator DoGame()
         {
-            var willInto = false;
+            var willInto = true;
 
             Music = gameObject.GetComponentsInChildren<AudioBehaviour>().First();
             Music.SetTrack(AudioTrack.Menu);
 
-            if (willInto)
-            {
-                var introText = new string[]
-                {
-                "Hello there!", "","","",
-                "Welcome to the land", "of puppets","","",
-                "Puppets are amazing", "puppets that can","puppet anything","",
-                "Here you will", "learn...","","",
-                "grow...", "","","",
-                "and puppet", "","","",
-                "Good luck!", "","","",
-                };
-
-                var introMsg = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(introText));
-                yield return TinyCoro.Join(introMsg);
-            }
 
             AutoScroller = new MapScroller(new Vector3(0, 0, 50));
 
@@ -82,15 +66,56 @@ namespace Hectic7
             {
                 new Marionette[]
                 {
-                    new Marionette(ControlScheme.Player, DirVertical.Down, Assets.Mars.Mar00Prefab, playerSpeed, playerSpeed),
+                    new Marionette(ControlScheme.Player, DirVertical.Down, Assets.Mars.Mar00Prefab, playerSpeed, playerSpeed, null),
                 },
                 new Marionette[]
                 {
-                    new Marionette(ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed),
-                    new Marionette(ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed),
-                    new Marionette(ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed),
-                    new Marionette(ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed),
-                    new Marionette(ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed),
+                    new Marionette(ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed,
+                    new[]
+                    {
+                        "#Look!", "no strings", "", "",
+                        "Stop that is", "dangerous", "", "",
+                        "#Stop me then", "", "", "",
+                    }),
+                    new Marionette(ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed,
+                    new[]
+                    {
+                        "Who are you", "puppets?", "", "",
+                        "#We are puppets", "no more", "", "",
+                    }),
+                    new Marionette(ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed,
+                    new[]
+                    {
+                        "#I feel dizzy", "", "", "",
+                    }),
+                    new Marionette(ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed,
+                    new[]
+                    {
+                        "#Out of my way!", "", "", "",
+                        "Okay", "", "", "",
+                        "#Nah lets fight", "instead", "", "",
+                        "...", "", "", "",
+                        "Okay", "", "", "",
+                    }),
+                    new Marionette(ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed,
+                    new[]
+                    {
+                        "Are there 7", "of you?", "", "",
+                        "#How did you", "know?", "", "",
+                        "I read the title", "screen", "", "",
+                    }),
+                    new Marionette(ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed,
+                    new[]
+                    {
+                        "Where did you", "learn all these", "spells?", "",
+                        "#Harvard", "", "", "",
+                    }),
+                    new Marionette(ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed,
+                    new[]
+                    {
+                        "So you are the ring leader?", "", "", "",
+                        "#Yes! I have", "the scissors!", "", "",
+                    }),
                 },
             };
 
@@ -108,15 +133,25 @@ namespace Hectic7
             {
                 //Chill for a bit
                 var freeRoam = TinyCoro.SpawnNext(() => player.DoMove(Role.Attacking));
-                yield return TinyCoro.Wait(8f);
+                yield return TinyCoro.Wait(5f);
+
+                var introText = new string[]
+                {
+                    "The bottom", "middle is","safe","",
+                };
+
+                var tip = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(introText));
+                yield return TinyCoro.Join(tip);
+
+                yield return TinyCoro.Wait(5f);
+
                 freeRoam.Kill();
             }
 
-            //First puppet msg
-            {
-                var msg = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(new[] { "A puppet appeared!" }));
-                yield return TinyCoro.Join(msg);
-            }
+
+            var intoDone = false;
+            
+            
 
             //While both parties can fight
             while (parties.All(p => p.Any(m => m.Alive)))
@@ -144,6 +179,15 @@ namespace Hectic7
                     attacker.SetActive(true);
                     defender.SetActive(true);
 
+                    if(!intoDone)
+                    {
+                        //First puppet msg
+                        intoDone = true;
+                        var msg = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(parties[(int)ControlScheme.Ai].First().Chat));
+                        yield return TinyCoro.Join(msg);
+                    }
+
+
                     var attackerTurn = TinyCoro.SpawnNext(() => attacker.DoTurn(defender));
                     yield return TinyCoro.Join(attackerTurn);
 
@@ -157,6 +201,26 @@ namespace Hectic7
                         && defender.Control == ControlScheme.Ai)
                     {
                         Music.SetTrack(AudioTrack.Menu);
+
+                        //Find prize
+                        AdvanceSet prize = defender.PatternSets.FirstOrDefault(dp => attacker.PatternSets.All(ap => ap.Name != dp.Name));
+                        if(prize == null)
+                        {
+                            var allPatterns = AdvancedPattern.GeneratePatternSets();
+                            prize = allPatterns.FirstOrDefault(dp => attacker.PatternSets.All(ap => ap.Name != dp.Name));
+                        }
+
+                        if(prize != null)
+                        {
+                            if(attacker.PatternSets.Count >= 14)
+                                attacker.PatternSets.RemoveAt(13);
+
+                            attacker.PatternSets.Add(prize);
+
+                            var prizeDialog = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(new[] { "You learned", prize.Name }));
+                            yield return TinyCoro.Join(prizeDialog);
+                        }
+
                         if (defendingParty.Any(m => m.Alive))
                         {
                             //Chill for a bit
@@ -164,7 +228,7 @@ namespace Hectic7
                             yield return TinyCoro.Wait(5f);
                             freeRoam.Kill();
 
-                            var msg = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(new[] { "Another puppet appeared!" }));
+                            var msg = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(defendingParty.First(p => p.Alive).Chat));
                             yield return TinyCoro.Join(msg);
                         }
                         else

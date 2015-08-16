@@ -44,11 +44,28 @@ namespace Hectic7
                 RealPosition.z = 1f;
             }
         }
+        public string[] Chat;
 
-        public Marionette(ControlScheme control, DirVertical section, PrefabAsset sprite,  float speedDefence, float speedAttack)
+        public Marionette(ControlScheme control, DirVertical section, PrefabAsset sprite,  float speedDefence, float speedAttack, string[] chat)
             : base(sprite)
         {
-            PatternSets = AdvancedPattern.GeneratePatternSets(4) ;
+            Chat = chat;
+            var defaultSets = AdvancedPattern.GeneratePatternSets() ;
+
+            if(control == ControlScheme.Player)
+            {
+                PatternSets = defaultSets.Take(1).ToList();
+            }
+            else
+            {
+                PatternSets = new List<AdvanceSet>();
+                while (defaultSets.Any() && PatternSets.Count < 4)
+                {
+                    var index = UnityEngine.Random.Range(0, defaultSets.Count);
+                    PatternSets.Add(defaultSets[index]);
+                    defaultSets.RemoveAt(index);
+                }
+            }
 
             Alive = true;
             SpeedDefence = speedDefence;

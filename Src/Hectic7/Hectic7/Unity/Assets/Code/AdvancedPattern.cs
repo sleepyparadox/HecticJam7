@@ -160,7 +160,7 @@ namespace Hectic7
 
             var bullets = new List<Bullet>();
 
-            var randTurn = speed * 0.25f * (UnityEngine.Random.Range(0, 100) >= 50 ? -1 : 1);
+            var randTurn = speed * UnityEngine.Random.Range(0f, 0.5f) * (UnityEngine.Random.Range(0, 100) >= 50 ? -1 : 1);
 
             for (var i = 0; i < count; ++i)
             {
@@ -198,7 +198,7 @@ namespace Hectic7
                 else if (Shape == BulletShape.Circle)
                 {
                     var angle = n * Mathf.PI * 2f;
-                    bullet.Center = start + (new Vector3(Mathf.Sin(angle), Mathf.Cos(angle)) * 16);
+                    bullet.Center = start + (new Vector3(Mathf.Sin(angle), Mathf.Cos(angle)) * 1);
                     bullet.Velocity = (bullet.Center - start).normalized * speed;
                 }
                 else
@@ -215,7 +215,7 @@ namespace Hectic7
                 else
                 {
                     var steerAmount = 0f;
-                    if (n >= 0.5f)
+                    if (n > 0.5f)
                         steerAmount = 1f;
                     else if (n < 0.5f)
                         steerAmount = -1f;
@@ -312,7 +312,7 @@ namespace Hectic7
             throw new NotImplementedException();
         }
 
-        public static List<AdvanceSet> GeneratePatternSets(int count)
+        public static List<AdvanceSet> GeneratePatternSets()
         {
             var cUpSmall = new AdvancedPattern()
             {
@@ -336,16 +336,58 @@ namespace Hectic7
                 BulletSpeed = BulletSpeed.Slow,
             };
 
+            var fillRight = new AdvancedPattern()
+            {
+                Origin = BulletOrigin.Right,
+                Direction = BulletMovement.Straight,
+                Shape = BulletShape.LineSide,
+                Fill = BulletFill.SlowAlt,
+                BulletCount = BulletCount.Many,
+                BulletType = BulletType.BulletSmall,
+                BulletSpeed = BulletSpeed.Medium,
+            };
+
+            var circleBig = new AdvancedPattern()
+            {
+                Origin = BulletOrigin.Middle,
+                Direction = BulletMovement.Straight,
+                Shape = BulletShape.Circle,
+                Fill = BulletFill.SlowAlt,
+                BulletCount = BulletCount.Few,
+                BulletType = BulletType.BulletLarge,
+                BulletSpeed = BulletSpeed.Slow,
+            };
+
             var sets = new List<AdvanceSet>()
             {
                 new AdvanceSet
                 (
-                    "Uptown Funk",
+                    "Upbeat",
                     cUpBig.Clone(),
                     cUpSmall.Clone(),
                     cUpSmall.Clone()
                 ),
-
+                new AdvanceSet
+                (
+                    "Clockwork",
+                    fillRight.Clone(),
+                    fillRight.Clone((p) => { p.Origin = BulletOrigin.Bottom; p.Shape = BulletShape.LineFloor; }),
+                    fillRight.Clone((p) => { p.Origin = BulletOrigin.Left; p.Fill = BulletFill.Slow; })
+                ),
+                new AdvanceSet
+                (
+                    "WindMill",
+                    circleBig.Clone(),
+                    circleBig.Clone(),
+                    fillRight.Clone((p) => {  p.Origin = BulletOrigin.Bottom; p.Fill = BulletFill.Slow; p.BulletSpeed = BulletSpeed.Fast; })
+                ),
+                new AdvanceSet
+                (
+                    "Cross Counter",
+                    fillRight.Clone((p) => { p.Origin = BulletOrigin.Right; p.Fill = BulletFill.Slow; p.BulletType = BulletType.BulletLarge; }),
+                    fillRight.Clone((p) => { p.Origin = BulletOrigin.Left; p.Fill = BulletFill.SlowAlt; }),
+                    fillRight.Clone((p) => { p.Origin = BulletOrigin.Left; p.Fill = BulletFill.SlowAlt; })
+                ),
             };
             
             return sets;

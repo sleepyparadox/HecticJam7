@@ -25,11 +25,14 @@ namespace Hectic7
                 var i = 0;
                 foreach (var line in lines)
                 {
-                    dialog[i].Set(line, null);
+                    dialog[i].Set(line.Replace("#", ""), null);
                     i++;
 
                     yield return null;
                 }
+
+                if (lines.Any(l => l.Contains("#")))
+                    dialog.WorldPosition += new UnityEngine.Vector3(0, 64, 0);
 
                 //Wait for next to be pressed
                 dialog.FixedInputDisabled = false;
