@@ -15,7 +15,7 @@ namespace Hectic7
 
             while (consumableText.Any())
             {
-                var dialog = new DialogPopup(Assets.Dialogs.MainDialogPrefab, canBack: false, fixedCursor: true);
+                var dialog = new DialogPopup(Assets.Dialogs.ChattyDialogPrefab, canBack: false, fixedCursor: true);
                 dialog.FixedInputDisabled = true;
                 dialog.OnFixedClick += dialog.Dispose;
 

@@ -1,0 +1,9 @@
+How to play
+
+Z Enter
+X Back, Menu
+
+Arrow Keys to move
+
+Combat is turn based you will only be harmed by spells cast by opponent
+You will learn more spells as you play

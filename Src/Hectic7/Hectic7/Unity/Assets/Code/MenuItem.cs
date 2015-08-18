@@ -11,19 +11,20 @@ namespace Hectic7
         public TextMesh TextMesh;
         public bool Empty { get { return string.IsNullOrEmpty(TextMesh.text); } }
         public Action OnClick;
+        public GetTipFunc GenerateToolTip;
 
         public MenuItem(GameObject gameObject)
             : base(gameObject)
         {
-            Debug.Log(gameObject.name + " looking for child Text");
             TextMesh = FindChildComponent<TextMesh>("Text");
             TextMesh.text = string.Empty;
         }
 
-        public void Set(string text, Action onClick)
+        public void Set(string text, Action onClick, GetTipFunc generateToolTip = null)
         {
             TextMesh.text = text;
             OnClick = onClick;
+            GenerateToolTip = generateToolTip;
         }
     }
 }

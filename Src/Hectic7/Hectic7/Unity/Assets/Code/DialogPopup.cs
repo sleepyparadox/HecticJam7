@@ -17,9 +17,13 @@ namespace Hectic7
         private bool _canBack;
         public int _index;
         private GameObject _cursor;
+        float _lastVisibleAt;
+        bool _wasVisible = false;
+        int _oldIndex = -1;
 
         public event Action OnFixedClick;
         public bool FixedInputDisabled = false;
+        private ToolTip _toolTip;
 
         public MenuItem this[int i] { get { return _items[i]; } }
 
@@ -38,9 +42,11 @@ namespace Hectic7
             }
         }
 
-        public DialogPopup(PrefabAsset popup, bool canBack = true, bool fixedCursor = false)
+        public DialogPopup(PrefabAsset popup, bool canBack = true, bool fixedCursor = false, string name = null)
             : base(popup)
         {
+            if (!string.IsNullOrEmpty(name))
+                GameObject.name = name;
             _canBack = canBack;
             Stack.Add(this);
             OnDispose += (me) => Debug.Log("Disposing " + GameObject.name);
@@ -49,6 +55,11 @@ namespace Hectic7
             var depth = Stack.Any() ? Stack.Min(d => d.WorldPosition.z) : 0;
             depth -= 25;
             WorldPosition = new Vector3(WorldPosition.x, WorldPosition.y, depth);
+
+            _toolTip = new ToolTip();
+            _toolTip.WorldPosition = new Vector3(_toolTip.WorldPosition.x, _toolTip.WorldPosition.y, depth);
+            _toolTip.SetActive(false);
+            _toolTip.Parent = this;
 
             _items = new List<MenuItem>();
             for(var i = 0; i < 100; ++i)
@@ -71,9 +82,14 @@ namespace Hectic7
         }
         void HandleFixedCursorInput(UnityObject me)
         {
-            if (FixedInputDisabled)
+            _toolTip.SetActive(false);
+            if (FixedInputDisabled
+                || HiddenOrStunned())
+            {
+                _cursor.SetActive(false);
                 return;
-
+            }
+            
             _cursor.SetActive(Time.time % 1f > 0.5f);
 
             if(_enterKeys.Any(key => Input.GetKeyUp(key))
@@ -85,8 +101,28 @@ namespace Hectic7
                 }
             }
         }
+
+        bool HiddenOrStunned()
+        {
+            var visible = Stack.Last() == this;
+            var justBecameVisible = visible && !_wasVisible;
+            _wasVisible = visible;
+
+            if (justBecameVisible)
+                _lastVisibleAt = Time.time;
+
+            return !visible || justBecameVisible;
+        }
+
         void HandleChoiceInput(UnityObject me)
         {
+            if(HiddenOrStunned())
+            {
+                _toolTip.SetActive(false);
+                _cursor.SetActive(false);
+                return;
+            }
+
             //Exit
             if (_canBack
                 && _backKeys.Any(key => Input.GetKeyUp(key)))
@@ -94,13 +130,10 @@ namespace Hectic7
                 Dispose();
                 return;
             }
-
-            if(Stack.Last() != this)
-            {
-                _cursor.SetActive(false);
-                return;
-            }
-
+           
+            if (Stack.Last() != this)
+                _lastVisibleAt = Time.time;
+                        
             var optionCount = _items.Count(item => !item.Empty);
             if (optionCount == 0)
             {
@@ -129,7 +162,6 @@ namespace Hectic7
                 //Nav up
                 if (Input.GetKeyUp(KeyCode.DownArrow) || Input.GetKeyUp(KeyCode.S))
                 {
-                    Debug.Log("DownArrow");
                     _index = (_index + 1).WrapToEnd(_items.Count);
 
                     while (_items[_index].Empty)
@@ -139,7 +171,19 @@ namespace Hectic7
                 }
             }
 
-            _cursor.transform.position = _items[_index].WorldPosition +  new Vector3(-8 , /*All lines are bad hack*/-8, 0);
+            _cursor.transform.position = _items[_index].WorldPosition + new Vector3(-8, /*All lines are bad hack*/-8, 0);
+
+            if (_items[_index].GenerateToolTip != null) //TODO HACK
+               // && (_index != _oldIndex || !_toolTip.GameObject.activeInHierarchy))
+            {
+                var tipText = _items[_index].GenerateToolTip();
+                _toolTip.SetText(tipText);
+                _toolTip.SetActive(true);
+            }
+            else// if (_items[_index].GenerateToolTip == null)
+            {
+                _toolTip.SetActive(false);
+            }
 
             //Enter
             if (optionCount > 0
@@ -148,9 +192,12 @@ namespace Hectic7
                 if (!_items[_index].Empty
                     && _items[_index].OnClick != null)
                 {
+                    Debug.Log("On click " + _items[_index].TextMesh.text + " in " + GameObject.name + ", " + this);
                     _items[_index].OnClick();
                 }
             }
+
+            _oldIndex = _index;
         }
     }
 }

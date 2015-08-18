@@ -48,12 +48,18 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Unity\Assets\Assets.cs" />
-    <Compile Include="Unity\Assets\Code\AdvancedPattern.cs" />
+    <Compile Include="Unity\Assets\Code\BetterHelper.cs" />
+    <Compile Include="Unity\Assets\Code\BetterPattern.cs" />
+    <Compile Include="Unity\Assets\Code\Menu.cs" />
+    <Compile Include="Unity\Assets\Code\BetterPatterns.cs" />
     <Compile Include="Unity\Assets\Code\AudioBehaviour.cs" />
     <Compile Include="Unity\Assets\Code\Bullet.cs" />
     <Compile Include="Unity\Assets\Code\ChattyDialogPopup.cs" />
+    <Compile Include="Unity\Assets\Code\DialogPickers.cs" />
     <Compile Include="Unity\Assets\Code\DialogPopup.cs" />
     <Compile Include="Unity\Assets\Code\Direction.cs" />
+    <Compile Include="Unity\Assets\Code\Names.cs" />
+    <Compile Include="Unity\Assets\Code\PatternEnums.cs" />
     <Compile Include="Unity\Assets\Code\PatternsOld.cs" />
     <Compile Include="Unity\Assets\Code\Main.cs" />
     <Compile Include="Unity\Assets\Code\MapScroller.cs" />
@@ -62,6 +68,7 @@
     <Compile Include="Unity\Assets\Code\HecticHelper.cs" />
     <Compile Include="Unity\Assets\Code\Role.cs" />
     <Compile Include="Unity\Assets\Code\Timer.cs" />
+    <Compile Include="Unity\Assets\Code\ToolTip.cs" />
     <Compile Include="Unity\Assets\UnityTools\Asset\Asset.cs" />
     <Compile Include="Unity\Assets\UnityTools\Asset\AssetDirectory.cs" />
     <Compile Include="Unity\Assets\UnityTools\Asset\AssetGenerator.cs" />

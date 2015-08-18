@@ -77,5 +77,18 @@ public static class HecticHelper
         var choice = fields.First(f => f.EnumType == typeof(T)).Choice.Value;
         return (T)(object)choice;
     }
+
 }
-   
+
+[AttributeUsageAttribute(AttributeTargets.Field, Inherited = false, AllowMultiple = false)]
+public class PatternAttribute : System.Attribute
+{
+    public readonly int Cost;
+    public readonly string CustomLabel;
+
+    public PatternAttribute(int cost, string label = null, string tooltip = null)
+    {
+        Cost = cost;
+        CustomLabel = label;
+    }
+}

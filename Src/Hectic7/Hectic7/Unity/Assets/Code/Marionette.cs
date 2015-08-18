@@ -13,6 +13,7 @@ namespace Hectic7
         Player = 0,
         Ai = 1,
     }
+
     public class Marionette : UnityObject
     {
         public DirVertical Section { get; private set; }
@@ -30,7 +31,7 @@ namespace Hectic7
 
         public Vector3 RealPosition;
         public Vector3 Size = new Vector3(16, 16, 0);
-        public List<AdvanceSet> PatternSets;
+        public List<BetterPattern> Patterns;
 
         public Vector3 Center
         {
@@ -50,19 +51,19 @@ namespace Hectic7
             : base(sprite)
         {
             Chat = chat;
-            var defaultSets = AdvancedPattern.GeneratePatternSets() ;
+            var defaultSets = BetterPatterns.GeneratePatternSets() ;
 
             if(control == ControlScheme.Player)
             {
-                PatternSets = defaultSets.Take(1).ToList();
+                Patterns = defaultSets.Take(1).ToList();
             }
             else
             {
-                PatternSets = new List<AdvanceSet>();
-                while (defaultSets.Any() && PatternSets.Count < 4)
+                Patterns = new List<BetterPattern>();
+                while (defaultSets.Any() && Patterns.Count < 4)
                 {
                     var index = UnityEngine.Random.Range(0, defaultSets.Count);
-                    PatternSets.Add(defaultSets[index]);
+                    Patterns.Add(defaultSets[index]);
                     defaultSets.RemoveAt(index);
                 }
             }
@@ -83,17 +84,14 @@ namespace Hectic7
         {
             Center = Main.GetStartingPos(this);
             WorldPosition = RealPosition.Snap();
-
-            Debug.Log("Set " + this + " to " + WorldPosition);
         }
 
         public IEnumerator DoTurn(Marionette defender)
         {
             Main.S.Timer.InfiniteTime = true;
             //TODO choose pattern
-            Debug.Log(this + " start turn vs " + defender);
 
-            AdvanceSet selectedPattern = null;
+            BetterPattern selectedPattern = null;
             var selectedSkip = false;
 
             if(Control == ControlScheme.Ai)
@@ -112,7 +110,7 @@ namespace Hectic7
             }
             else
             {
-                BuildAndShowTurnMenu(defender, (choice) => selectedPattern = choice, () => selectedSkip = true);
+                Menu.ShowMenu(this, (choice) => selectedPattern = choice, () => selectedSkip = true);
             }
 
             //Wait for choice
@@ -121,8 +119,8 @@ namespace Hectic7
             if (selectedSkip)
                 yield break;
 
-            var pattern = TinyCoro.SpawnNext(() => DoPatternSequence(defender, selectedPattern));
-            var timeOut = TinyCoro.SpawnNext(() => DoTimer(AdvancedPattern.PhaseDuration * selectedPattern.Count));
+            var pattern = TinyCoro.SpawnNext(() => selectedPattern.DoPreform(this, defender, Section.GetOther()));
+            var timeOut = TinyCoro.SpawnNext(() => DoTimer(BetterPattern.PhaseDuration * selectedPattern.Phases.Count));
             var attackMove = TinyCoro.SpawnNext(() => this.DoMove(Role.Attacking), "pattern");
             var defendMove = TinyCoro.SpawnNext(() => defender.DoMove(Role.Defending), "pattern");
 
@@ -157,88 +155,27 @@ namespace Hectic7
             Main.S.Timer.InfiniteTime = true;
         }
 
-        IEnumerator DoPatternSequence(Marionette defender, AdvanceSet selectedPattern)
+        BetterPattern AiChoosePattern(Marionette defender, out string patternName)
         {
-            var patterns = new List<TinyCoro>();
-            TinyCoro.Current.OnFinished += (c, r) =>
-            {
-                foreach (var p in patterns)
-                    p.Kill();
-            };
-            
-            for (var i = 0; i < selectedPattern.Count; ++i)
-            {
-                var pattern = selectedPattern[i];
-                patterns.Add(TinyCoro.SpawnNext(() => pattern.DoPreform(this, defender, Section.GetOther())));
-
-                yield return TinyCoro.Wait(AdvancedPattern.PhaseDuration);
-            }
-
-            yield return TinyCoro.WaitUntil(() => patterns.All(p => !p.Alive));
-        }
-
-        AdvanceSet AiChoosePattern(Marionette defender, out string patternName)
-        {
-            var set = PatternSets[UnityEngine.Random.Range(0, PatternSets.Count)];
+            var set = Patterns[UnityEngine.Random.Range(0, Patterns.Count)];
             patternName = set.Name;
             return set;
         }
 
-        void BuildAndShowTurnMenu(Marionette defender, Action<AdvanceSet> onPatternChoice, Action onSkip)
-        {
-            var mainDialog = new DialogPopup(Assets.Dialogs.TinyDialogPrefab, false);
-
-            if(WorldPosition.x + (Size.x / 2f) < Main.Left + (Main.MapSize.x / 2f))
-            {
-                //Sprite on left, show dialog on right
-                mainDialog.WorldPosition = WorldPosition + new Vector3(+24, -8, mainDialog.WorldPosition.z);
-            }
-            else
-            {
-                //Sprite on right, show dialog on left
-                mainDialog.WorldPosition = WorldPosition + new Vector3(-5 * 8, -8, mainDialog.WorldPosition.z);
-            }
-
-            if(mainDialog.WorldPosition.y < Main.Bottom)
-            {
-                mainDialog.WorldPosition += new Vector3(0, 24, 0);
-            }
-            if (mainDialog.WorldPosition.y + 24 > Main.Top)
-            {
-                mainDialog.WorldPosition += new Vector3(0, Main.Top - 24, 0);
-            }
-
-            DialogPopup spellDialog;
-
-            mainDialog[0].Set("Spells", () =>
-            {
-                spellDialog = new DialogPopup(Assets.Dialogs.BigDialogPrefab);
-                var i = 0;
-                foreach(var set in PatternSets)
-                {
-                    var temp = set;
-                    spellDialog[i].Set(temp.Name, () =>
-                    {
-                        Debug.Log("Pattern selected");
-                        mainDialog.Dispose();
-                        spellDialog.Dispose();
-
-                        onPatternChoice(temp);
-                    });
-                    i++;
-                }
-            });
-
-            mainDialog[1].Set("Edit", () =>
-            {
-                TinyCoro.SpawnNext(() => AdvancedPatternEditor.DoBuildAndShowEditDialog(this));
-            });
-        }
-
-        public IEnumerator DoMove(Role role)
+        public IEnumerator DoMove(Role role, Action onSkip = null)
         {
             while (true)
             {
+                while (DialogPopup.Stack.Count > 0)
+                    yield return null;
+
+                if (Control == ControlScheme.Player
+                    && DialogPopup._backKeys.Any(key => Input.GetKeyUp(key)))
+                {
+                    Menu.ShowMenu(this, null, onSkip);
+                    continue;
+                }
+
                 var speed = role == Role.Attacking ? SpeedAttack : SpeedDefence;
 
                 Vector3 input;
@@ -264,48 +201,6 @@ namespace Hectic7
                 RealPosition = Main.ClampToMap(RealPosition, Section, Size);
                 RealPosition.z = 1f;
                 WorldPosition = RealPosition.Snap();
-
-                if(Control == ControlScheme.Player
-                    && DialogPopup.Stack.Count == 0
-                    && DialogPopup._backKeys.Any( key => Input.GetKeyUp(key)))
-                {
-                    //var oldTrack = Main.S.Music.CurrentTrack;
-                    Main.S.Music.SetTrack(AudioTrack.Menu);
-                    Time.timeScale = 0f;
-                    var mainDialog = new DialogPopup(Assets.Dialogs.TinyDialogPrefab);
-                    mainDialog.OnDispose += (u) =>
-                    {
-                        Time.timeScale = 1f;
-                        //Main.S.Music.SetTrack(oldTrack);
-                    };
-                    //mainDialog[0].Set("Info", () =>
-                    //{
-                    //    var infoDialog = new DialogPopup(Assets.Dialogs.TinyDialogPrefab);
-
-                    //    var msgText = new[]
-                    //    {
-                    //        "Hug the bottom", "to avoid enemy bullet", "patterns when", "encounter starts",
-                    //    };
-                    //    var msg = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(msgText));
-                    //});
-
-                    mainDialog[1].Set("Edit", () =>
-                    {
-                        TinyCoro.SpawnNext(() => AdvancedPatternEditor.DoBuildAndShowEditDialog(this));
-                    });
-                    mainDialog[0].Set("About", () =>
-                    {
-                        var msgText = new[]
-                        {
-                            "Created by Don Logan", "", "", "",
-                            "For Hectic Jam 7", "Theme: Puppet Master", "", "",
-                            "For GameBoy Jam 2015" , "Rules: Only 4 colors", "Rules: 160px x 144px", "",
-                            "Music by Jared Hahn", "", "", "",
-                        };
-                        var msg = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(msgText));
-                    });
-
-                }
 
                 if (role == Role.Defending)
                 {
@@ -346,7 +241,12 @@ namespace Hectic7
             {
                 Main.S.Timer.Time = timeRemaining;
                 yield return null;
-                timeRemaining -= Time.deltaTime;
+
+                if(DialogPopup.Stack.Count == 0)
+                    timeRemaining -= Time.deltaTime;
+
+
+
             }
             Main.S.Timer.Time = 0f;
         }

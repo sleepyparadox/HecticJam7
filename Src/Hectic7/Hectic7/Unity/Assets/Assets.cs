@@ -17,17 +17,25 @@ public class Assets
    public class Dialogs
    {
       public readonly static PrefabAsset BigDialogPrefab = new PrefabAsset(@"Dialogs/BigDialog");
+      public readonly static PrefabAsset ChattyDialogPrefab = new PrefabAsset(@"Dialogs/ChattyDialog");
       public readonly static PrefabAsset ConfirmDialogPrefab = new PrefabAsset(@"Dialogs/ConfirmDialog");
-      public readonly static PrefabAsset MainDialogPrefab = new PrefabAsset(@"Dialogs/MainDialog");
+      public readonly static PrefabAsset MenuDialogPrefab = new PrefabAsset(@"Dialogs/MenuDialog");
       public readonly static PrefabAsset TinyDialogPrefab = new PrefabAsset(@"Dialogs/TinyDialog");
-      public readonly static PrefabAsset TipDialogPrefab = new PrefabAsset(@"Dialogs/TipDialog");
-      public static Asset[] GetAssets() { return new Asset []{ BigDialogPrefab, ConfirmDialogPrefab, MainDialogPrefab, TinyDialogPrefab, TipDialogPrefab }; }
+      public readonly static PrefabAsset TipPopupPrefab = new PrefabAsset(@"Dialogs/TipPopup");
+      public readonly static PrefabAsset ToastPopupPrefab = new PrefabAsset(@"Dialogs/ToastPopup");
+      public static Asset[] GetAssets() { return new Asset []{ BigDialogPrefab, ChattyDialogPrefab, ConfirmDialogPrefab, MenuDialogPrefab, TinyDialogPrefab, TipPopupPrefab, ToastPopupPrefab }; }
    }
    public class Mars
    {
       public readonly static PrefabAsset Mar00Prefab = new PrefabAsset(@"Mars/Mar00");
       public readonly static PrefabAsset Mar01Prefab = new PrefabAsset(@"Mars/Mar01");
       public static Asset[] GetAssets() { return new Asset []{ Mar00Prefab, Mar01Prefab }; }
+   }
+   public class Music
+   {
+      public readonly static AudioClipAsset Don_CombatAudioClip = new AudioClipAsset(@"Music/Don_Combat");
+      public readonly static AudioClipAsset Don_MenuAudioClip = new AudioClipAsset(@"Music/Don_Menu");
+      public static Asset[] GetAssets() { return new Asset []{ Don_CombatAudioClip, Don_MenuAudioClip }; }
    }
    public class Sprites
    {
@@ -45,9 +53,10 @@ public class Assets
          public readonly static MaterialAsset Bullet8Material = new MaterialAsset(@"Sprites/Materials/Bullet8");
          public readonly static MaterialAsset CursorMaterial = new MaterialAsset(@"Sprites/Materials/Cursor");
          public readonly static MaterialAsset DialogCornerMaterial = new MaterialAsset(@"Sprites/Materials/DialogCorner");
+         public readonly static MaterialAsset DialogEdgeMaterial = new MaterialAsset(@"Sprites/Materials/DialogEdge");
          public readonly static MaterialAsset Mar00BMaterial = new MaterialAsset(@"Sprites/Materials/Mar00B");
          public readonly static MaterialAsset Mar01FMaterial = new MaterialAsset(@"Sprites/Materials/Mar01F");
-         public static Asset[] GetAssets() { return new Asset []{ Bullet16Material, Bullet8Material, CursorMaterial, DialogCornerMaterial, Mar00BMaterial, Mar01FMaterial }; }
+         public static Asset[] GetAssets() { return new Asset []{ Bullet16Material, Bullet8Material, CursorMaterial, DialogCornerMaterial, DialogEdgeMaterial, Mar00BMaterial, Mar01FMaterial }; }
       }
    }
    public class Tiles

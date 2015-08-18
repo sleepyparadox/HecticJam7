@@ -44,6 +44,8 @@ namespace Hectic7
         }
         private void FixedUpdate(UnityObject me)
         {
+            if (DialogPopup.Stack.Count > 0)
+                return;         
             RealPosition += Velocity * Time.fixedDeltaTime;
 
             if (RealPosition.x  < Main.Left && Velocity.x < 0f)

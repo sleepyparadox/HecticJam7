@@ -77,7 +77,7 @@ public class UnityObject
         return GameObject.Find(name);
     }
 
-    public bool Disposed
+    public bool IsDisposed
     {
         get
         {
@@ -89,7 +89,7 @@ public class UnityObject
     {
         get
         {
-            return !Disposed;
+            return !IsDisposed;
         }
     }
 
@@ -102,7 +102,7 @@ public class UnityObject
     {
         Debug.Log("Disposing " + (GameObject == null ? "null" : GameObject.name) + " a " + this);
 
-        if (Disposed)
+        if (IsDisposed)
         {
             return;
         }

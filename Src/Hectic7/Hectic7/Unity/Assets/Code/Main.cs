@@ -49,7 +49,7 @@ namespace Hectic7
         public IEnumerator DoGame()
         {
             var willInto = true;
-            //willInto = false;
+            willInto = false;
 
             Music = gameObject.GetComponentsInChildren<AudioBehaviour>().First();
             Music.SetTrack(AudioTrack.Menu);
@@ -138,8 +138,9 @@ namespace Hectic7
             {
                 //Chill for a bit
                 var freeRoam = TinyCoro.SpawnNext(() => player.DoMove(Role.Attacking));
-                yield return TinyCoro.Wait(5f);
 
+                yield return TinyCoro.Wait(5f);
+                
                 var introText = new string[]
                 {
                     "I feel safe", "at the ","bottom of the","screen",
@@ -180,14 +181,35 @@ namespace Hectic7
                         break;
 
                     attacker.SetActive(true);
-                    defender.SetActive(true);
 
                     if(!intoDone)
                     {
-                        //First puppet msg
                         intoDone = true;
+                        
+                        Debug.Log("Start free roam");
+                        var freeRoam = TinyCoro.SpawnNext(() => player.DoMove(Role.Attacking));
+                        var freeRoamFor = 5f;
+                        while (freeRoamFor > 0f)
+                        {
+                            yield return null;
+
+                            if (DialogPopup.Stack.Count == 0)
+                                freeRoamFor -= Time.deltaTime;
+
+                            Timer.Time = freeRoamFor;
+                        }
+                        Debug.Log("Stop free roam");
+                        freeRoam.Kill();
+
+                        //Puppet chat
+                        defender.SetActive(true);
+
                         var msg = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(defender.Chat));
                         yield return TinyCoro.Join(msg);
+                    }
+                    else
+                    {
+                        defender.SetActive(true);
                     }
 
 
@@ -206,19 +228,19 @@ namespace Hectic7
                         Music.SetTrack(AudioTrack.Menu);
 
                         //Find prize
-                        AdvanceSet prize = defender.PatternSets.FirstOrDefault(dp => attacker.PatternSets.All(ap => ap.Name != dp.Name));
+                        BetterPattern prize = defender.Patterns.FirstOrDefault(dp => attacker.Patterns.All(ap => ap.Name != dp.Name));
                         if(prize == null)
                         {
-                            var allPatterns = AdvancedPattern.GeneratePatternSets();
-                            prize = allPatterns.FirstOrDefault(dp => attacker.PatternSets.All(ap => ap.Name != dp.Name));
+                            var allPatterns = BetterPatterns.GeneratePatternSets();
+                            prize = allPatterns.FirstOrDefault(dp => attacker.Patterns.All(ap => ap.Name != dp.Name));
                         }
 
                         if(prize != null)
                         {
-                            if(attacker.PatternSets.Count >= 14)
-                                attacker.PatternSets.RemoveAt(13);
+                            if(attacker.Patterns.Count >= 14)
+                                attacker.Patterns.RemoveAt(13);
 
-                            attacker.PatternSets.Add(prize);
+                            attacker.Patterns.Add(prize);
 
                             var prizeDialog = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(new[] { "You learned", prize.Name }));
                             yield return TinyCoro.Join(prizeDialog);
