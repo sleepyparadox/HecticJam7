@@ -14,7 +14,7 @@ namespace Hectic7
 
         public static List<DialogPopup> Stack = new List<DialogPopup>();
         public List<MenuItem> _items;
-        private bool _canBack;
+        public bool _canBack;
         public int _index;
         private GameObject _cursor;
         float _lastVisibleAt;

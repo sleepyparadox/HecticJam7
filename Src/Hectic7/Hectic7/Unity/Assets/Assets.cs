@@ -23,7 +23,8 @@ public class Assets
       public readonly static PrefabAsset TinyDialogPrefab = new PrefabAsset(@"Dialogs/TinyDialog");
       public readonly static PrefabAsset TipPopupPrefab = new PrefabAsset(@"Dialogs/TipPopup");
       public readonly static PrefabAsset ToastPopupPrefab = new PrefabAsset(@"Dialogs/ToastPopup");
-      public static Asset[] GetAssets() { return new Asset []{ BigDialogPrefab, ChattyDialogPrefab, ConfirmDialogPrefab, MenuDialogPrefab, TinyDialogPrefab, TipPopupPrefab, ToastPopupPrefab }; }
+      public readonly static PrefabAsset TutorialDialogPrefab = new PrefabAsset(@"Dialogs/TutorialDialog");
+      public static Asset[] GetAssets() { return new Asset []{ BigDialogPrefab, ChattyDialogPrefab, ConfirmDialogPrefab, MenuDialogPrefab, TinyDialogPrefab, TipPopupPrefab, ToastPopupPrefab, TutorialDialogPrefab }; }
    }
    public class Mars
    {

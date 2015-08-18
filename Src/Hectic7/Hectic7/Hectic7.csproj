@@ -69,6 +69,7 @@
     <Compile Include="Unity\Assets\Code\Role.cs" />
     <Compile Include="Unity\Assets\Code\Timer.cs" />
     <Compile Include="Unity\Assets\Code\ToolTip.cs" />
+    <Compile Include="Unity\Assets\Code\Tutorial.cs" />
     <Compile Include="Unity\Assets\UnityTools\Asset\Asset.cs" />
     <Compile Include="Unity\Assets\UnityTools\Asset\AssetDirectory.cs" />
     <Compile Include="Unity\Assets\UnityTools\Asset\AssetGenerator.cs" />

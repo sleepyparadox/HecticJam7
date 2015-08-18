@@ -49,11 +49,16 @@ namespace Hectic7
         public IEnumerator DoGame()
         {
             var willInto = true;
-            willInto = false;
+            //willInto = false;
+
+            if (willInto)
+            {
+                var tutorialCoro = TinyCoro.SpawnNext(Tutorial.DoTutorial);
+                yield return TinyCoro.Join(tutorialCoro);
+            }
 
             Music = gameObject.GetComponentsInChildren<AudioBehaviour>().First();
             Music.SetTrack(AudioTrack.Menu);
-
 
             AutoScroller = new MapScroller(new Vector3(0, 0, 50));
 
