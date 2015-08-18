@@ -10,20 +10,21 @@ namespace Hectic7
 {
     public static class Menu
     {
-        public static void ShowMenu(Marionette mario, Action<BetterPattern> onPatternChoice, /*TODO: Support skip*/ Action onSkip)
+        public static void ShowMenu(Marionette mario, Action<BetterPattern> onPatternChoice, /*TODO: Support skip*/ Action onSkip, bool spellsOnly = false, Action onReady = null)
         {
             var mainDialog = new DialogPopup(Assets.Dialogs.MenuDialogPrefab, onPatternChoice == null, name: "main");
 
             if (mario.WorldPosition.x + (mario.Size.x / 2f) < Main.Left + (Main.MapSize.x / 2f))
             {
                 //Sprite on left, show dialog on right
-                mainDialog.WorldPosition = mario.WorldPosition + new Vector3(+24, -8, mainDialog.WorldPosition.z);
+                mainDialog.WorldPosition = mario.WorldPosition + new Vector3(+16, -24, mainDialog.WorldPosition.z);
             }
             else
             {
                 //Sprite on right, show dialog on left
-                mainDialog.WorldPosition = mario.WorldPosition + new Vector3(-5 * 8, -8, mainDialog.WorldPosition.z);
+                mainDialog.WorldPosition = mario.WorldPosition + new Vector3(-56, -24, mainDialog.WorldPosition.z);
             }
+
 
             if (mainDialog.WorldPosition.y < Main.Bottom)
             {
@@ -59,20 +60,23 @@ namespace Hectic7
                 }, disposeOnSelect: true);
             });
 
-            mainDialog[1].Set("Edit", () =>
+            if (mario.EditUnlocked)
             {
-                var slotTexts = mario.Patterns.Select(p => p.Name).ToList();
-                var toolTips = mario.Patterns.Select<BetterPattern, GetTipFunc>(p => () => p.GetToolTip()).ToList();
-                if (slotTexts.Count < 14)
+                mainDialog[1].Set("Edit", () =>
                 {
-                    slotTexts.Add("New");
-                    toolTips.Add(() => new[] { "Create a", "new", "pattern" });
-                }
-                ShowSpellSelector(slotTexts, toolTips, (slot) =>
-                {
-                    ShowPhaseSelector(mario, slot, (u) => ShowMenu(mario, onPatternChoice, onSkip)); 
-                }, disposeOnSelect: false);
-            });
+                    var slotTexts = mario.Patterns.Select(p => p.Name).ToList();
+                    var toolTips = mario.Patterns.Select<BetterPattern, GetTipFunc>(p => () => p.GetToolTip()).ToList();
+                    if (slotTexts.Count < 14)
+                    {
+                        slotTexts.Add("New");
+                        toolTips.Add(() => new[] { "Create a", "new", "pattern" });
+                    }
+                    ShowSpellSelector(slotTexts, toolTips, (slot) =>
+                    {
+                        ShowPhaseSelector(mario, slot, (u) => ShowMenu(mario, onPatternChoice, onSkip));
+                    }, disposeOnSelect: false);
+                });
+            }
 
             mainDialog[2].Set("Config", ShowConfig);
 
@@ -84,7 +88,14 @@ namespace Hectic7
                     mainDialog.Dispose();
                 });
             }
-
+            if (onReady != null)
+            {
+                mainDialog[3].Set("Ready", () =>
+                {
+                    onReady();
+                    mainDialog.Dispose();
+                });
+            }
         }
         static void ShowConfig()
         {

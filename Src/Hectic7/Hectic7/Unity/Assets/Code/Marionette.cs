@@ -16,6 +16,7 @@ namespace Hectic7
 
     public class Marionette : UnityObject
     {
+        public bool EditUnlocked;
         public DirVertical Section { get; private set; }
         public bool Alive { get; private set; }
         public float SpeedDefence { get; private set; }
@@ -46,10 +47,12 @@ namespace Hectic7
             }
         }
         public string[] Chat;
+        public string Name;
 
-        public Marionette(ControlScheme control, DirVertical section, PrefabAsset sprite,  float speedDefence, float speedAttack, string[] chat)
+        public Marionette(string name, ControlScheme control, DirVertical section, PrefabAsset sprite,  float speedDefence, float speedAttack, string[] chat)
             : base(sprite)
         {
+            Name = name;
             Chat = chat;
             var defaultSets = BetterPatterns.GeneratePatternSets() ;
 
@@ -86,7 +89,7 @@ namespace Hectic7
             WorldPosition = RealPosition.Snap();
         }
 
-        public IEnumerator DoTurn(Marionette defender)
+        public IEnumerator DoTurn(Marionette defender, Marionette[] defendingParty)
         {
             Main.S.Timer.InfiniteTime = true;
             //TODO choose pattern
@@ -110,7 +113,7 @@ namespace Hectic7
             }
             else
             {
-                Menu.ShowMenu(this, (choice) => selectedPattern = choice, () => selectedSkip = true);
+                Menu.ShowMenu(this, (choice) => selectedPattern = choice, () => selectedSkip = true, spellsOnly: defender == defendingParty.First());
             }
 
             //Wait for choice
@@ -133,11 +136,13 @@ namespace Hectic7
             {
                 Debug.Log("Turn end because !pattern.Alive");
             }
-            if (!defender.Alive)
+            if (!defender.Alive
+                && defender.Control == ControlScheme.Ai)
             {
                 var text = new string[]
                 {
-                    (defender.Control == ControlScheme.Player ? "You" : "Opponent") + " was defeated",
+                    defender.Name,
+                    "was defeated",
                 };
                 var patternMessage = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(text));
                 yield return TinyCoro.Join(patternMessage);
@@ -162,7 +167,7 @@ namespace Hectic7
             return set;
         }
 
-        public IEnumerator DoMove(Role role, Action onSkip = null)
+        public IEnumerator DoMove(Role role, Action onSkip = null, Action onReady = null)
         {
             while (true)
             {
@@ -172,7 +177,7 @@ namespace Hectic7
                 if (Control == ControlScheme.Player
                     && DialogPopup._backKeys.Any(key => Input.GetKeyUp(key)))
                 {
-                    Menu.ShowMenu(this, null, onSkip);
+                    Menu.ShowMenu(this, null, onSkip, false, onReady);
                     continue;
                 }
 
@@ -204,6 +209,12 @@ namespace Hectic7
 
                 if (role == Role.Defending)
                 {
+                    if(Input.GetKeyUp(KeyCode.Alpha0))
+                    {
+                        Alive = false;
+                        yield break;
+                    }
+
                     var myPos = WorldPosition + HitPosLocal;
                     for (int i = 0; i < Main.S.ActiveBullets.Count; i++)
                     {
@@ -244,8 +255,6 @@ namespace Hectic7
 
                 if(DialogPopup.Stack.Count == 0)
                     timeRemaining -= Time.deltaTime;
-
-
 
             }
             Main.S.Timer.Time = 0f;

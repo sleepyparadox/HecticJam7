@@ -49,7 +49,10 @@ namespace Hectic7
         public IEnumerator DoGame()
         {
             var willInto = true;
-            //willInto = false;
+            willInto = false;
+
+            Music = gameObject.GetComponentsInChildren<AudioBehaviour>().First();
+            Music.SetTrack(AudioTrack.None);
 
             if (willInto)
             {
@@ -57,7 +60,6 @@ namespace Hectic7
                 yield return TinyCoro.Join(tutorialCoro);
             }
 
-            Music = gameObject.GetComponentsInChildren<AudioBehaviour>().First();
             Music.SetTrack(AudioTrack.Menu);
 
             AutoScroller = new MapScroller(new Vector3(0, 0, 50));
@@ -72,59 +74,48 @@ namespace Hectic7
             {
                 new Marionette[]
                 {
-                    new Marionette(ControlScheme.Player, DirVertical.Down, Assets.Mars.Mar00Prefab, playerSpeed, playerSpeed, null),
+                    new Marionette("Player", ControlScheme.Player, DirVertical.Down, Assets.Mars.Mar00Prefab, playerSpeed, playerSpeed, null),
                 },
                 new Marionette[]
                 {
-                    new Marionette(ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed,
+                    new Marionette("Mook", ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed, null),
+                    new Marionette("Rouge", ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed,
                     new[]
                     {
-                        "#My aggression", "needs an outlet", "and you are", "the first",
-                        "#person I have", "found", "", "",
+                        "#My aggression", "needs an outlet", "", "",
                     }),
-                    new Marionette(ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed,
+                    new Marionette("Priest", ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed,
                     new[]
                     {
-                        "#Look!", "no strings on", "me", "",
-                        "I will just", "blast you out", "of the sky then", "",
-                        "#Eeeek!", "", "", "",
+                        "#You lack of", "faith quite", "disturbing", "",
                     }),
-                    new Marionette(ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed,
+                    new Marionette("Ninja", ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed,
                     new[]
                     {
-                        "Is your sprite", "a cleric or", "a ninja?", "",
-                        "#I am a", "penguin", "puppet", "",
-                        "Really?!", "Ha", "", "",
-                        "#Well", "", "", "",
-                        "#What are", "you then?", "", "",
-                        "#Some kind of", "talking mushroom?", "", "",
-                        "No", "thats", "just a pony tail", "",
+                        "#", "", "", "",
+                        "???", "", "", "",
+                        "#", "", "", "",
+                        "Oh,", "", "", "",
+                        "I get it", "", "", "",
                     }),
-                    new Marionette(ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed,
+                    new Marionette("Penguin", ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed,
                     new[]
                     {
-                        "#TODO: WRITE CLEVER", "LINE HERE", "", "",
+                        "#Well you look", "like a mushroom", "", "",
+                    }),
+                    new Marionette("Surgeon", ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed,
+                    new[]
+                    {
+                        "#TODO: WRITE CLEVER", "BANTER", "", "",
                         "Whoops", "", "", "",
                     }),
-
-                    new Marionette(ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed,
+                    new Marionette("Dark Lord", ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed,
                     new[]
                     {
-                        "Where did you", "learn all these", "spells?", "",
-                        "#Harvard", "", "", "",
-                        "Penguins can", "go to havard?", "", "",
-                        "#I AM A", "NINJA", "", "",
-                        "#And my ", "classmates never", "saw me", "",
-                        "You didn't", "attend classes", "", "did you?",
-                        "#...", "", "", "",
-                    }),
-                    new Marionette(ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed,
-                    new[]
-                    {
-                        "So ", "you are the", "leader?", "",
-                        "#Yes!", "you have done", "well to get", "this far miss",
-                        "#mushroom", "", "", "",
-                        "I AM NOT A", "MUSHROOM", "", "",
+                        "#Join me", "and together we", "can rule the", "world as",
+                        "#lord and", "mushroom", "", "",
+                        "", "", "", "",
+                        "Nah", "", "", "",
                     }),
                 },
             };
@@ -139,33 +130,11 @@ namespace Hectic7
                 m.SetActive(false);
             }
 
-            if (willInto)
-            {
-                //Chill for a bit
-                var freeRoam = TinyCoro.SpawnNext(() => player.DoMove(Role.Attacking));
-
-                yield return TinyCoro.Wait(5f);
-                
-                var introText = new string[]
-                {
-                    "I feel safe", "at the ","bottom of the","screen",
-                };
-
-                var tip = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(introText));
-                yield return TinyCoro.Join(tip);
-
-                yield return TinyCoro.Wait(5f);
-
-                freeRoam.Kill();
-            }
-
-
             var intoDone = false;
             
             //While both parties can fight
             while (parties.All(p => p.Any(m => m.Alive)))
             {
-                Music.SetTrack(AudioTrack.Combat);
                 for (int iParty = 0; iParty < parties.Length; /*iterated below*/)
                 {
                     foreach (var p in parties)
@@ -192,11 +161,14 @@ namespace Hectic7
                         intoDone = true;
                         
                         Debug.Log("Start free roam");
-                        var freeRoam = TinyCoro.SpawnNext(() => player.DoMove(Role.Attacking));
                         var freeRoamFor = 5f;
+                        var freeRoam = TinyCoro.SpawnNext(() => player.DoMove(Role.Attacking, null, () => freeRoamFor = 0f));
                         while (freeRoamFor > 0f)
                         {
                             yield return null;
+                            var bullets2Dispose = new List<Bullet>(Main.S.ActiveBullets);
+                            foreach (var b in bullets2Dispose)
+                                b.Dispose();
 
                             if (DialogPopup.Stack.Count == 0)
                                 freeRoamFor -= Time.deltaTime;
@@ -208,17 +180,23 @@ namespace Hectic7
 
                         //Puppet chat
                         defender.SetActive(true);
+                        Music.SetTrack(AudioTrack.Combat);
 
-                        var msg = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(defender.Chat));
+                        var msg = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(new[] { "a violent", defender.Name + " appears" }));
                         yield return TinyCoro.Join(msg);
+
+                        if(defender.Chat != null)
+                        {
+                            msg = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(defender.Chat));
+                            yield return TinyCoro.Join(msg);
+                        }
                     }
                     else
                     {
                         defender.SetActive(true);
                     }
 
-
-                    var attackerTurn = TinyCoro.SpawnNext(() => attacker.DoTurn(defender));
+                    var attackerTurn = TinyCoro.SpawnNext(() => attacker.DoTurn(defender, defendingParty));
                     yield return TinyCoro.Join(attackerTurn);
 
                     var bullets = new List<Bullet>(Main.S.ActiveBullets);
@@ -230,6 +208,7 @@ namespace Hectic7
                     if (!defender.Alive
                         && defender.Control == ControlScheme.Ai)
                     {
+                        intoDone = false;
                         Music.SetTrack(AudioTrack.Menu);
 
                         //Find prize
@@ -250,28 +229,33 @@ namespace Hectic7
                             var prizeDialog = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(new[] { "You learned", prize.Name }));
                             yield return TinyCoro.Join(prizeDialog);
                         }
-
-                        if (defendingParty.Any(m => m.Alive))
+                        else if(!attacker.EditUnlocked)
                         {
-                            //Chill for a bit
-                            var freeRoam = TinyCoro.SpawnNext(() => attacker.DoMove(Role.Attacking));
-                            yield return TinyCoro.Wait(5f);
-                            freeRoam.Kill();
-
-                            intoDone = false;                           
+                            attacker.EditUnlocked = true;
+                            var editUnlockedDialog = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(new[] { "Edit unlocked!" }));
+                            yield return TinyCoro.Join(editUnlockedDialog);
                         }
-                        else
+
+                        if (defendingParty.All(m => !m.Alive))
                         {
                             var msg = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(new[] { "You win!" }));
                             yield return TinyCoro.Join(msg);
+                            break;
                         }
                     }
                     else if (!defender.Alive
-                      && defender.Control == ControlScheme.Ai)
+                      && defender.Control == ControlScheme.Player)
                     {
                         Music.SetTrack(AudioTrack.Menu);
                         var msg = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(new[] { "Game Over" }));
                         yield return TinyCoro.Join(msg);
+
+                        var loseTip = new string[]
+                        {
+                            "Get to the", "bottom of","screen between","rounds",
+                        };
+                        var tip = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(loseTip));
+                        yield return TinyCoro.Join(tip);
                     }
                     else
                     {
