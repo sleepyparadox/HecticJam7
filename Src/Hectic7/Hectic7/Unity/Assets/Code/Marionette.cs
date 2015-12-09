@@ -16,7 +16,7 @@ namespace Hectic7
 
     public class Marionette : UnityObject
     {
-        public bool EditUnlocked;
+        public static bool EditUnlocked;
         public DirVertical Section { get; private set; }
         public bool Alive { get; private set; }
         public float SpeedDefence { get; private set; }
@@ -48,10 +48,17 @@ namespace Hectic7
         }
         public string[] Chat;
         public string Name;
+        float _randWeight;
+        float _homeWeight;
+        float _avoidWeight;
 
-        public Marionette(string name, ControlScheme control, DirVertical section, PrefabAsset sprite,  float speedDefence, float speedAttack, string[] chat)
+        public Marionette(string name, ControlScheme control, DirVertical section, PrefabAsset sprite,  float speedDefence, float speedAttack, string[] chat, float randWeight, float homeWeight, float avoidWeight)
             : base(sprite)
         {
+            _randWeight = randWeight;
+            _homeWeight = homeWeight;
+            _avoidWeight = avoidWeight;
+
             Name = name;
             Chat = chat;
             var defaultSets = BetterPatterns.GeneratePatternSets() ;
@@ -187,7 +194,27 @@ namespace Hectic7
                 if(Control == ControlScheme.Ai)
                 {
                     _aiSteer += UnityEngine.Random.Range(-10f, 10f) * Time.deltaTime;
-                    input = new Vector3(Mathf.Sin(_aiSteer), Mathf.Cos(_aiSteer), 0f);
+                    var rand = new Vector3(Mathf.Sin(_aiSteer), Mathf.Cos(_aiSteer), 0f) * _randWeight;
+
+
+                    var home = new Vector3(68, 100);
+                    var goHome = (home - this.WorldPosition).normalized * _homeWeight;
+
+
+                    var flee = Vector3.zero;
+                    if (Marionette.EditUnlocked)
+                    {
+                        var closest = Main.S.ActiveBullets.OrderBy(b => (b.Center - this.Center).sqrMagnitude).FirstOrDefault();
+                        if (closest != null)
+                        {
+                            var dist = (this.Center - closest.Center);
+                            if (dist.magnitude < 25)
+                                flee = (this.Center - closest.Center).normalized;
+                        }
+                    }
+                    flee *= _avoidWeight;
+
+                    input = (goHome + rand + flee).normalized;
                 }
                 else
                 {

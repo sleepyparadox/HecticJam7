@@ -60,7 +60,7 @@ namespace Hectic7
                 }, disposeOnSelect: true);
             });
 
-            if (mario.EditUnlocked)
+            if (Marionette.EditUnlocked)
             {
                 mainDialog[1].Set("Edit", () =>
                 {

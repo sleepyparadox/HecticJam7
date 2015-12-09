@@ -45,19 +45,22 @@ namespace Hectic7
         {
             TinyCoro.StepAllCoros();
         }
+        static bool tutorial = true;
 
         public IEnumerator DoGame()
         {
-            var willInto = true;
-            willInto = false;
+            //willInto = false;
+            bool willInto = true;
+
 
             Music = gameObject.GetComponentsInChildren<AudioBehaviour>().First();
             Music.SetTrack(AudioTrack.None);
 
-            if (willInto)
+            if (tutorial)
             {
                 var tutorialCoro = TinyCoro.SpawnNext(Tutorial.DoTutorial);
                 yield return TinyCoro.Join(tutorialCoro);
+                tutorial = false;
             }
 
             Music.SetTrack(AudioTrack.Menu);
@@ -74,21 +77,21 @@ namespace Hectic7
             {
                 new Marionette[]
                 {
-                    new Marionette("Player", ControlScheme.Player, DirVertical.Down, Assets.Mars.Mar00Prefab, playerSpeed, playerSpeed, null),
+                    new Marionette("Player", ControlScheme.Player, DirVertical.Down, Assets.Mars.Mar00Prefab, playerSpeed, playerSpeed, null, 0,0,0),
                 },
                 new Marionette[]
                 {
-                    new Marionette("Mook", ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed, null),
+                    new Marionette("Mook", ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed, null, 1, 1, 0),
                     new Marionette("Rouge", ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed,
                     new[]
                     {
                         "#My aggression", "needs an outlet", "", "",
-                    }),
+                    }, 1, 0.4f, 0),
                     new Marionette("Priest", ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed,
                     new[]
                     {
                         "#You lack of", "faith quite", "disturbing", "",
-                    }),
+                    },1, 0.1f, 0.1f),
                     new Marionette("Ninja", ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed,
                     new[]
                     {
@@ -97,18 +100,18 @@ namespace Hectic7
                         "#", "", "", "",
                         "Oh,", "", "", "",
                         "I get it", "", "", "",
-                    }),
+                    }, 1, 0.1f, 0f),
                     new Marionette("Penguin", ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed,
                     new[]
                     {
                         "#Well you look", "like a mushroom", "", "",
-                    }),
+                    }, 0.8f, 0, 0.2f),
                     new Marionette("Surgeon", ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed,
                     new[]
                     {
                         "#TODO: WRITE CLEVER", "BANTER", "", "",
                         "Whoops", "", "", "",
-                    }),
+                    }, 0.5f, 0, 0.5f),
                     new Marionette("Dark Lord", ControlScheme.Ai, DirVertical.Up, Assets.Mars.Mar01Prefab, botSpeed, botSpeed,
                     new[]
                     {
@@ -116,7 +119,7 @@ namespace Hectic7
                         "#lord and", "mushroom", "", "",
                         "", "", "", "",
                         "Nah", "", "", "",
-                    }),
+                    }, 0, 0f, 1f),
                 },
             };
 
@@ -229,16 +232,24 @@ namespace Hectic7
                             var prizeDialog = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(new[] { "You learned", prize.Name }));
                             yield return TinyCoro.Join(prizeDialog);
                         }
-                        else if(!attacker.EditUnlocked)
+                        else if(! Marionette.EditUnlocked)
                         {
-                            attacker.EditUnlocked = true;
+                            Marionette.EditUnlocked = true;
                             var editUnlockedDialog = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(new[] { "Edit unlocked!" }));
                             yield return TinyCoro.Join(editUnlockedDialog);
                         }
 
                         if (defendingParty.All(m => !m.Alive))
                         {
-                            var msg = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(new[] { "You win!" }));
+                            var msg = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(new[] 
+                            {
+                                "You win!", "","","",
+                                "Thanks for playing", "","","",
+                                "Created by Don Logan", "", "", "",
+                                "Music by Jared Hahn", "", "", "",
+                                "Made for", "GameBoy Jam 2015" , "Rules: Only 4 colors", "Rules: 160px x 144px",
+                                "Made for", "Hectic Jam 7", "Aug 15 to 17", "Theme: Puppet Master", "",
+                            }));
                             yield return TinyCoro.Join(msg);
                             break;
                         }
@@ -247,15 +258,16 @@ namespace Hectic7
                       && defender.Control == ControlScheme.Player)
                     {
                         Music.SetTrack(AudioTrack.Menu);
-                        var msg = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(new[] { "Game Over" }));
-                        yield return TinyCoro.Join(msg);
-
-                        var loseTip = new string[]
+                        var msg = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(new[] 
                         {
-                            "Get to the", "bottom of","screen between","rounds",
-                        };
-                        var tip = TinyCoro.SpawnNext(() => ChattyDialog.DoChattyDialog(loseTip));
-                        yield return TinyCoro.Join(tip);
+                            "Game Over", "", "","",
+                             "Thanks for playing", "","","",
+                                "Created by Don Logan", "", "", "",
+                                "Music by Jared Hahn", "", "", "",
+                                "Made for", "GameBoy Jam 2015" , "Rules: Only 4 colors", "Rules: 160px x 144px",
+                                "Made for", "Hectic Jam 7", "Aug 15 to 17", "Theme: Puppet Master", ""
+                        }));
+                        yield return TinyCoro.Join(msg);
                     }
                     else
                     {
@@ -263,6 +275,8 @@ namespace Hectic7
                     }
                 }
             }
+
+            yield return TinyCoro.Wait(1f);
 
             //Retry msg
             {

@@ -25,18 +25,26 @@ namespace Hectic7
             }
         }
 
-        public readonly UnityObject Owner;
+        public readonly Marionette Owner;
         public Vector3 Velocity;
 
-        public Bullet(UnityObject owner, BulletType bulletType)
+        public Bullet(Marionette owner, BulletType bulletType)
             : base(PrefabFromType(bulletType))
         {
-            if (bulletType == BulletType.BulletSmall)
-                Size = new Vector3(8, 8, 0);
-            else
-                Size = new Vector3(16, 16, 0);
-
             Owner = owner;
+            if (bulletType == BulletType.BulletSmall)
+            {
+                Size = new Vector3(8, 8, 0);
+                if (Owner.Control == ControlScheme.Ai)
+                    GameObject.GetComponentInChildren<Renderer>().sharedMaterial = Assets.Sprites.Materials.Bullet8AltMaterial.Material;
+            }
+            else
+            {
+                Size = new Vector3(16, 16, 0);
+                if (Owner.Control == ControlScheme.Ai)
+                    GameObject.GetComponentInChildren<Renderer>().sharedMaterial = Assets.Sprites.Materials.Bullet16AltMaterial.Material;
+            }
+
             UnityFixedUpdate += FixedUpdate;
 
             Main.S.ActiveBullets.Add(this);

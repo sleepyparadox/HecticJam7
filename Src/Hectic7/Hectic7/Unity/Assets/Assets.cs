@@ -41,23 +41,27 @@ public class Assets
    public class Sprites
    {
       public readonly static Texture2dAsset Bullet16Texture2d = new Texture2dAsset(@"Sprites/Bullet16");
+      public readonly static Texture2dAsset Bullet16AltTexture2d = new Texture2dAsset(@"Sprites/Bullet16Alt");
       public readonly static Texture2dAsset Bullet8Texture2d = new Texture2dAsset(@"Sprites/Bullet8");
+      public readonly static Texture2dAsset Bullet8AltTexture2d = new Texture2dAsset(@"Sprites/Bullet8Alt");
       public readonly static Texture2dAsset CursorTexture2d = new Texture2dAsset(@"Sprites/Cursor");
       public readonly static Texture2dAsset DialogCornerTexture2d = new Texture2dAsset(@"Sprites/DialogCorner");
       public readonly static Texture2dAsset DialogEdgeTexture2d = new Texture2dAsset(@"Sprites/DialogEdge");
       public readonly static Texture2dAsset Mar00BTexture2d = new Texture2dAsset(@"Sprites/Mar00B");
       public readonly static Texture2dAsset Mar01FTexture2d = new Texture2dAsset(@"Sprites/Mar01F");
-      public static Asset[] GetAssets() { return new Asset []{ Bullet16Texture2d, Bullet8Texture2d, CursorTexture2d, DialogCornerTexture2d, DialogEdgeTexture2d, Mar00BTexture2d, Mar01FTexture2d }; }
+      public static Asset[] GetAssets() { return new Asset []{ Bullet16Texture2d, Bullet16AltTexture2d, Bullet8Texture2d, Bullet8AltTexture2d, CursorTexture2d, DialogCornerTexture2d, DialogEdgeTexture2d, Mar00BTexture2d, Mar01FTexture2d }; }
       public class Materials
       {
          public readonly static MaterialAsset Bullet16Material = new MaterialAsset(@"Sprites/Materials/Bullet16");
+         public readonly static MaterialAsset Bullet16AltMaterial = new MaterialAsset(@"Sprites/Materials/Bullet16Alt");
          public readonly static MaterialAsset Bullet8Material = new MaterialAsset(@"Sprites/Materials/Bullet8");
+         public readonly static MaterialAsset Bullet8AltMaterial = new MaterialAsset(@"Sprites/Materials/Bullet8Alt");
          public readonly static MaterialAsset CursorMaterial = new MaterialAsset(@"Sprites/Materials/Cursor");
          public readonly static MaterialAsset DialogCornerMaterial = new MaterialAsset(@"Sprites/Materials/DialogCorner");
          public readonly static MaterialAsset DialogEdgeMaterial = new MaterialAsset(@"Sprites/Materials/DialogEdge");
          public readonly static MaterialAsset Mar00BMaterial = new MaterialAsset(@"Sprites/Materials/Mar00B");
          public readonly static MaterialAsset Mar01FMaterial = new MaterialAsset(@"Sprites/Materials/Mar01F");
-         public static Asset[] GetAssets() { return new Asset []{ Bullet16Material, Bullet8Material, CursorMaterial, DialogCornerMaterial, DialogEdgeMaterial, Mar00BMaterial, Mar01FMaterial }; }
+         public static Asset[] GetAssets() { return new Asset []{ Bullet16Material, Bullet16AltMaterial, Bullet8Material, Bullet8AltMaterial, CursorMaterial, DialogCornerMaterial, DialogEdgeMaterial, Mar00BMaterial, Mar01FMaterial }; }
       }
    }
    public class Tiles
